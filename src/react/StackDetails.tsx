@@ -196,13 +196,15 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 				)}
 			</div>
 			{stack.managedBy === "panal" && (
-				<StackActionButtons
-					stackId={stackId}
-					stackStatus={stack.status}
-					onAction={handleAction}
-				/>
+				<>
+					<StackActionButtons
+						stackId={stackId}
+						stackStatus={stack.status}
+						onAction={handleAction}
+					/>
+					<StackLogViewer stackId={stackId} className="mk-6" />
+				</>
 			)}
-			<StackLogViewer stackId={stackId} className="mt-6" />
 			{/* Render services, etc. */}
 			<div className="mt-6">
 				<h2 className="text-lg font-semibold mb-2">Services</h2>

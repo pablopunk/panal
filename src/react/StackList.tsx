@@ -118,15 +118,14 @@ export default function StackList() {
 		onKeyDown,
 		...props
 	}: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-		<button
-			type="button"
+		<article
 			className="w-full text-left p-0 bg-transparent border-none active:outline-none hover:ring-2 hover:ring-emerald-500 rounded-lg"
 			onClick={onClick}
 			onKeyDown={onKeyDown}
 			{...props}
 		>
 			{children}
-		</button>
+		</article>
 	);
 
 	return (
