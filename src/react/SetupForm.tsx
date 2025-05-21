@@ -130,4 +130,4 @@ export default function SetupForm() {
 			</div>
 		</form>
 	);
-} 
+}

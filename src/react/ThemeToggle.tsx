@@ -55,4 +55,4 @@ export default function ThemeToggle() {
 			{isDark ? <Moon /> : <Sun />}
 		</button>
 	);
-} 
+}

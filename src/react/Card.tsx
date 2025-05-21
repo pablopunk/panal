@@ -25,4 +25,4 @@ export default function Card({
 			<div className="p-3">{children}</div>
 		</div>
 	);
-} 
+}

@@ -21,4 +21,4 @@ export const GET: APIRoute = async ({ request }) => {
 		status: 200,
 		headers: { "Content-Type": "application/json" },
 	});
-}; 
+};

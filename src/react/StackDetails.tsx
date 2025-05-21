@@ -327,4 +327,4 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 			)}
 		</div>
 	);
-} 
+}

@@ -7,11 +7,11 @@ const DB_LOCATION = process.env.DB_LOCATION || "./data";
 const DB_FILE = path.join(DB_LOCATION, "db.json");
 
 export interface User {
-		id: string;
-		username: string;
-		passwordHash: string;
-		createdAt: string;
-	}
+	id: string;
+	username: string;
+	passwordHash: string;
+	createdAt: string;
+}
 
 export interface Settings {
 	[key: string]: unknown;

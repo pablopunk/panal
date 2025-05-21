@@ -92,4 +92,4 @@ export default function Header({ user }: { user: string | null }) {
 			</div>
 		</header>
 	);
-} 
+}
