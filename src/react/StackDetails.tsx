@@ -39,6 +39,7 @@ function getInitialTheme() {
 export default function StackDetails({ stackId }: { stackId: string }) {
 	const [stack, setStack] = useState<Stack | null>(null);
 	const [services, setServices] = useState<Service[]>([]);
+	const [hostname, setHostname] = useState("localhost");
 	const [loading, setLoading] = useState(true);
 	const stackRef = useRef<Stack | null>(null);
 	const servicesRef = useRef<Service[]>([]);
@@ -75,6 +76,12 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 	useEffect(() => {
 		servicesRef.current = services;
 	}, [services]);
+
+	useEffect(() => {
+		fetch("/api/settings")
+			.then((res) => res.json())
+			.then((data) => setHostname(data.data?.hostname || "localhost"));
+	}, []);
 
 	const fetchStack = useCallback(async () => {
 		setLoading(true);
@@ -245,7 +252,7 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 										{service.ports.map((port) => (
 											<a
 												key={`${port.published}:${port.target}`}
-												href={`http://localhost:${port.published}`}
+												href={`http://${hostname}:${port.published}`}
 												target="_blank"
 												rel="noopener noreferrer"
 												className="inline-flex items-center px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-sm"

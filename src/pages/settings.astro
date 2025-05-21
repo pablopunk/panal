@@ -1,8 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import AppSettingsForm from "../react/AppSettingsForm";
 import Button from "../react/Button";
 import Card from "../react/Card";
 import Input from "../react/Input";
+import UserSettingsForm from "../react/UserSettingsForm";
 ---
 
 <Layout title="Settings">
@@ -13,71 +15,23 @@ import Input from "../react/Input";
 
   <div class="grid gap-6 max-w-2xl">
     <Card client:only="react" title="User Settings">
-      <form class="space-y-4">
-        <Input
-          client:only="react"
-          label="Username"
-          name="username"
-          value="admin"
-          required
-        />
-
-        <Input
-          client:only="react"
-          type="password"
-          label="Current Password"
-          name="currentPassword"
-          required
-        />
-
-        <Input
-          client:only="react"
-          type="password"
-          label="New Password"
-          name="newPassword"
-        />
-
-        <Input
-          client:only="react"
-          type="password"
-          label="Confirm New Password"
-          name="confirmPassword"
-        />
-
-        <div class="pt-2">
-          <Button client:only="react" type="submit">Save User Settings</Button>
-        </div>
-      </form>
+      <UserSettingsForm client:only="react" initialUsername="admin" />
     </Card>
 
-    <Card client:only="react" title="Application Settings">
-      <form class="space-y-4">
-        <Input
-          client:only="react"
-          label="Hostname"
-          name="hostname"
-          value="localhost"
-          required
-        />
-
-        <div class="pt-2">
-          <Button client:only="react" type="submit"
-            >Save Application Settings</Button
-          >
-        </div>
-      </form>
+    <Card client:only="react" title="App Settings">
+      <AppSettingsForm client:only="react" />
     </Card>
 
     <Card client:only="react" title="Environment Variables">
       <div class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <div class="font-medium mb-2 text-sm">DB_LOCATION</div>
+            <div class="font-medium mb-2 text-sm pt-2">DB_LOCATION</div>
             <div class="text-sm text-gray-500 dark:text-gray-400">/data/db</div>
           </div>
 
           <div>
-            <div class="font-medium mb-2 text-sm">STACKS_DIR</div>
+            <div class="font-medium mb-2 text-sm pt-2">STACKS_DIR</div>
             <div class="text-sm text-gray-500 dark:text-gray-400">
               /data/stacks
             </div>

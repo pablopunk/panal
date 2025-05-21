@@ -3,7 +3,7 @@ import { getSettings, updateSettings } from "../../../lib/db";
 
 export const GET: APIRoute = async () => {
 	try {
-		const settings = getSettings();
+		const settings = await getSettings();
 
 		return new Response(JSON.stringify({ success: true, data: settings }), {
 			status: 200,

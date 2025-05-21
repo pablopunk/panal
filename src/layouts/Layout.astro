@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from "astro:transitions";
+import { getCurrentUser } from "../lib/getCurrentUser";
 import Header from "../react/Header";
 import Sidebar from "../react/Sidebar";
 
@@ -8,6 +9,7 @@ interface Props {
 }
 
 const { title } = Astro.props;
+const user = getCurrentUser(Astro);
 ---
 
 <!doctype html>
@@ -27,7 +29,7 @@ const { title } = Astro.props;
     <div class="flex h-screen overflow-hidden">
       <Sidebar client:only="react" />
       <div class="flex flex-col flex-1 overflow-hidden">
-        <Header client:only="react" />
+        <Header client:only="react" user={user} />
         <main class="flex-1 overflow-auto p-6">
           <slot />
         </main>
