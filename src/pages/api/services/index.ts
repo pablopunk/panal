@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
-import { getServices } from "../../../lib/docker/services";
+import { type Service, getServices } from "../../../lib/docker/services";
 
 export const GET: APIRoute = async ({ url }) => {
 	try {
 		const stackId = url.searchParams.get("stackId");
-		let services;
+		let services: Service[];
 
 		if (stackId) {
 			services = await getServicesByStackId(stackId);

@@ -19,13 +19,13 @@ const services = await getServicesByStackId(id || "");
 
 let tabs: { id: string; label: string }[] = [];
 if (!stack) {
-  return Astro.redirect("/404");
+	return Astro.redirect("/404");
 }
 
 tabs = [
-  { id: "services", label: "Services" },
-  { id: "edit", label: "Edit" },
-  { id: "logs", label: "Logs" },
+	{ id: "services", label: "Services" },
+	{ id: "edit", label: "Edit" },
+	{ id: "logs", label: "Logs" },
 ];
 ---
 
