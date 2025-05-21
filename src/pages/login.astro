@@ -8,7 +8,7 @@ import Input from "../react/Input";
 
 <Layout title="Login">
   <div class="flex items-center justify-center min-h-screen p-6">
-    <Card class="w-full max-w-md">
+    <Card client:only="react" className="w-full max-w-md">
       <div class="text-center mb-6">
         <div class="flex justify-center mb-2">
           <Icon name="lucide:box" class="h-12 w-12 text-emerald-600" />
@@ -20,12 +20,20 @@ import Input from "../react/Input";
       </div>
 
       <form class="space-y-4">
-        <Input label="Username" name="username" required />
+        <Input client:only="react" label="Username" name="username" required />
 
-        <Input type="password" label="Password" name="password" required />
+        <Input
+          client:only="react"
+          type="password"
+          label="Password"
+          name="password"
+          required
+        />
 
         <div class="pt-4">
-          <Button type="submit" class="w-full"> Login </Button>
+          <Button client:only="react" type="submit" className="w-full">
+            Login
+          </Button>
         </div>
       </form>
     </Card>

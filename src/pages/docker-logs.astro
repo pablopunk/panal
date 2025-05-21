@@ -11,9 +11,9 @@ import Card from "../react/Card";
     <p class="text-gray-500 dark:text-gray-400">Docker daemon logs</p>
   </div>
 
-  <Card>
+  <Card client:only="react">
     <div class="flex justify-end mb-4">
-      <Button variant="outline" size="sm" id="refresh-logs">
+      <Button client:only="react" variant="outline" size="sm" id="refresh-logs">
         <Icon name="lucide:refresh-cw" class="h-4 w-4 mr-1" />
         Refresh
       </Button>

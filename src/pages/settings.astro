@@ -12,42 +12,63 @@ import Input from "../react/Input";
   </div>
 
   <div class="grid gap-6 max-w-2xl">
-    <Card title="User Settings">
+    <Card client:only="react" title="User Settings">
       <form class="space-y-4">
-        <Input label="Username" name="username" value="admin" required />
+        <Input
+          client:only="react"
+          label="Username"
+          name="username"
+          value="admin"
+          required
+        />
 
         <Input
+          client:only="react"
           type="password"
           label="Current Password"
           name="currentPassword"
           required
         />
 
-        <Input type="password" label="New Password" name="newPassword" />
+        <Input
+          client:only="react"
+          type="password"
+          label="New Password"
+          name="newPassword"
+        />
 
         <Input
+          client:only="react"
           type="password"
           label="Confirm New Password"
           name="confirmPassword"
         />
 
         <div class="pt-2">
-          <Button type="submit">Save User Settings</Button>
+          <Button client:only="react" type="submit">Save User Settings</Button>
         </div>
       </form>
     </Card>
 
-    <Card title="Application Settings">
+    <Card client:only="react" title="Application Settings">
       <form class="space-y-4">
-        <Input label="Hostname" name="hostname" value="localhost" required />
+        <Input
+          client:only="react"
+          label="Hostname"
+          name="hostname"
+          value="localhost"
+          required
+        />
 
         <div class="pt-2">
-          <Button type="submit">Save Application Settings</Button>
+          <Button client:only="react" type="submit"
+            >Save Application Settings</Button
+          >
         </div>
       </form>
     </Card>
 
-    <Card title="Environment Variables">
+    <Card client:only="react" title="Environment Variables">
       <div class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
