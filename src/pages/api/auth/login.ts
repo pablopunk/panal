@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
 			);
 		}
 
-		const isValid = validateUser(username, password);
+		const isValid = await validateUser(username, password);
 
 		if (!isValid) {
 			return new Response(

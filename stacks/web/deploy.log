@@ -1,0 +1,5 @@
+time="2025-05-21T18:12:28+02:00" level=warning msg="/Users/pablopunk/Downloads/panal-astro/stacks/web/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Container web-web-1  Restarting
+ Container web-web-1  Started
+
+[Process exited with code 0]

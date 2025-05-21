@@ -1,53 +1,39 @@
 ---
-import { Icon } from "astro-icon/components";
-import Badge from "../components/Badge.astro";
-import Button from "../components/Button.astro";
-import Card from "../components/Card.astro";
 import Layout from "../layouts/Layout.astro";
-
-// Mock data for stacks
 import { getStacks } from "../lib/docker/stacks";
+import StackList from "../react/StackList";
+
 const stacks = await getStacks();
+const panalStacks = stacks.filter((stack) => stack.managedBy === "panal");
+const externalStacks = stacks.filter((stack) => stack.managedBy === "external");
 ---
 
 <Layout title="Stacks">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold">Stacks</h1>
-    <Button>
-      <Icon name="lucide:plus" class="h-4 w-4 mr-2" />
-      Create Stack
-    </Button>
+    <a href="/stacks/create">
+      <button
+        class="flex gap-1 items-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          ><path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"></path></svg
+        >
+        Create Stack
+      </button>
+    </a>
   </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {stacks.map(stack => (
-      <a href={`/stacks/${stack.id}`} class="block">
-        <Card class="h-full hover:border-emerald-500 transition-colors">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-lg font-medium mb-2">{stack.name}</h3>
-              <div class="flex items-center gap-2 mb-4">
-                <Badge variant={stack.status === 'running' ? 'success' : stack.status === 'partial' ? 'warning' : 'danger'}>
-                  {stack.status}
-                </Badge>
-                <span class="text-sm text-gray-500 dark:text-gray-400">
-                  {stack.services} service{stack.services !== 1 ? 's' : ''}
-                </span>
-              </div>
-            </div>
-            <div class="flex items-center">
-              {stack.type === 'swarm' ? (
-                <Badge variant="info">Swarm</Badge>
-              ) : (
-                <Badge>Standalone</Badge>
-              )}
-            </div>
-          </div>
-          <div class="text-sm text-gray-500 dark:text-gray-400">
-            {stack.managedBy === 'panal' ? 'Managed by Panal' : 'External Stack'}
-          </div>
-        </Card>
-      </a>
-    ))}
-  </div>
+  <StackList
+    client:only="react"
+    panalStacks={panalStacks}
+    externalStacks={externalStacks}
+  />
 </Layout>

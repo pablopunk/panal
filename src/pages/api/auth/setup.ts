@@ -4,7 +4,6 @@ import { createUser, isSetupComplete } from "../../../lib/auth";
 export const POST: APIRoute = async ({ request }) => {
 	try {
 		// Check if setup is already complete
-		if (isSetupComplete()) {
 			return new Response(
 				JSON.stringify({ success: false, message: "Setup already completed" }),
 				{
@@ -31,7 +30,7 @@ export const POST: APIRoute = async ({ request }) => {
 		}
 
 		// Create the admin user
-		const userCreated = createUser(username, password);
+		const userCreated = await createUser(username, password);
 
 		if (!userCreated) {
 			return new Response(
@@ -43,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
 			);
 		}
 
-		// Handle swarm setup (mock for now)
+		// Handle swarm setup (still mock for now)
 		let swarmMessage = "";
 		switch (swarmAction) {
 			case "init":

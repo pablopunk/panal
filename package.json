@@ -3,18 +3,21 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "astro dev",
+		"dev": "concurrently \"pnpm:astro\" \"pnpm:ws-server\"",
 		"start": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview",
-    "astro": "astro",
-    "lint:fix": "biome check --write src",
-    "lint": "biome check src"
+		"astro": "astro dev",
+		"ws-server": "bun --watch server.ts",
+		"lint:fix": "biome check --write src",
+		"lint": "biome check src"
 	},
 	"dependencies": {
+		"@astrojs/react": "^4.2.7",
 		"@astrojs/tailwind": "latest",
 		"@hookform/resolvers": "^3.9.1",
 		"@iconify-json/lucide": "^1.2.44",
+		"@monaco-editor/react": "^4.7.0",
 		"@radix-ui/react-accordion": "1.2.2",
 		"@radix-ui/react-alert-dialog": "1.1.4",
 		"@radix-ui/react-aspect-ratio": "1.1.1",
@@ -49,13 +52,16 @@
 		"clsx": "^2.1.1",
 		"cmdk": "1.0.4",
 		"date-fns": "4.1.0",
+		"dockerode": "^4.0.6",
 		"embla-carousel-react": "8.5.1",
 		"input-otp": "1.4.1",
+		"js-yaml": "^4.1.0",
 		"lucide-react": "^0.454.0",
+		"monaco-editor": "^0.52.2",
 		"next": "15.2.4",
-		"react": "^19",
+		"react": "^19.1.0",
 		"react-day-picker": "8.10.1",
-		"react-dom": "^19",
+		"react-dom": "^19.1.0",
 		"react-hook-form": "^7.54.1",
 		"react-resizable-panels": "^2.1.7",
 		"recharts": "2.15.0",
@@ -63,15 +69,19 @@
 		"tailwind-merge": "^2.5.5",
 		"tailwindcss-animate": "^1.0.7",
 		"vaul": "^0.9.6",
+		"ws": "^8.18.2",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
+		"@types/dockerode": "^3.3.39",
+		"@types/js-yaml": "^4.0.9",
 		"@types/node": "^22",
-		"@types/react": "^19",
-		"@types/react-dom": "^19",
+		"@types/react": "^19.1.4",
+		"@types/react-dom": "^19.1.5",
+		"@types/ws": "^8.18.1",
+		"concurrently": "^9.1.2",
 		"postcss": "^8",
-		"tailwindcss": "^3.4.17",
-		"typescript": "^5"
+		"tailwindcss": "^3.4.17"
 	}
 }

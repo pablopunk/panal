@@ -1,0 +1,28 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+I want to create a webapp called Panal, that's similar to Dockge. It's called Panal and it works like Dockge but it's compatible with Docker Swarm. I want the UI to be minimalist, modern, with dark/light mode (automatic). My desired workflow would be:
+
+The first time you boot it, you need to create an admin user. This will be saved on a sqlite database. The directory of the database comes from an env variable DB_LOCATION, so it's easier to handle with docker run and docker compose. The user should just be username/password, and it should select if it wants to start a new swarm environment (docker swarm init) or just join one (and provide instructions how to do so).
+Once logged in, the first page is the list of stacks. The stacks directory is also an env variable STACKS_DIR. The stacks can either be:
+user-defined stacks on the stacks directory. They can be edited, inspected, see their status (started, stopped,etc), etc. They can either be swarm or standalone.
+running stacks from docker (docker stack ls). They can't be edited since they're not handled by Panal
+Clicking on a stack will take you to the stack page. Here you have 3 tabs. Services (a list of its services with their exposed ports. You can click on a port to go it or just click the service to go to the service page), Edit (similar to Create Stack, which is two Monaco editors, one for the compose.yml and one for the .env, in one page) and Logs (live logs from all services on the stack)
+
+Service page: should list the containers (replicas) that the service has. You can update the service, start/stop the containers, see the logs, see the state...
+
+Container page: Logs and terminal you can interact with (docker exec -it <container> /bin/sh or /bin/bash, similar to Dockge)
+
+Settings page: Simple form with username/password to change it if you want. And also the Hostname, which will be used whenever you click on a port to go to "HOSTNAME:PORT"
+
+Cluster page: when using docker swarm, the cluster page should show the nodes, their stats, and the services they're running. Keep it minimal.
+
+Terminal page: This is actually a host terminal. i.e. this app should run on a Dockerfile (create it) so this terminal is the cli of that Dockerfile OS, whatever it is. So inside it you can still run docker commands cause it's the real cli.
+
+Docker logs page: This is logs from docker, not the containers. So should use "sudo journalctl -fu docker.service" or whatever you can use inside the host, I actually don't know how to implement this. Dockge has it.
+
+All pages should be minimal, don't overload them with info/sections.
+
+All pages are a representation of the current docker state. The API should consider if the service it's dealing with it's swarm or standalone, since it needs to support all environments.

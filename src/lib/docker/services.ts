@@ -1,3 +1,7 @@
+import Docker from "dockerode";
+
+const docker = new Docker();
+
 // Mock data for services
 
 export interface Port {
@@ -16,106 +20,150 @@ export interface Service {
 	ports: Port[];
 }
 
-const mockServices: Service[] = [
-	{
-		id: "web-1",
-		name: "web-stack_web",
-		stackId: "web-stack",
-		status: "running",
-		replicas: 2,
-		image: "nginx:alpine",
-		ports: [{ published: 8080, target: 80, protocol: "tcp" }],
-	},
-	{
-		id: "api-1",
-		name: "web-stack_api",
-		stackId: "web-stack",
-		status: "running",
-		replicas: 2,
-		image: "node:16-alpine",
-		ports: [{ published: 3000, target: 3000, protocol: "tcp" }],
-	},
-	{
-		id: "redis-1",
-		name: "web-stack_redis",
-		stackId: "web-stack",
-		status: "running",
-		replicas: 1,
-		image: "redis:alpine",
-		ports: [],
-	},
-	{
-		id: "postgres-1",
-		name: "db-stack_postgres",
-		stackId: "db-stack",
-		status: "running",
-		replicas: 1,
-		image: "postgres:14-alpine",
-		ports: [{ published: 5432, target: 5432, protocol: "tcp" }],
-	},
-	{
-		id: "mongo-1",
-		name: "db-stack_mongo",
-		stackId: "db-stack",
-		status: "running",
-		replicas: 1,
-		image: "mongo:5",
-		ports: [{ published: 27017, target: 27017, protocol: "tcp" }],
-	},
-	{
-		id: "prometheus",
-		name: "monitoring_prometheus",
-		stackId: "monitoring",
-		status: "running",
-		replicas: 1,
-		image: "prom/prometheus",
-		ports: [{ published: 9090, target: 9090, protocol: "tcp" }],
-	},
-	{
-		id: "grafana",
-		name: "monitoring_grafana",
-		stackId: "monitoring",
-		status: "running",
-		replicas: 1,
-		image: "grafana/grafana",
-		ports: [{ published: 3001, target: 3000, protocol: "tcp" }],
-	},
-	{
-		id: "alertmanager",
-		name: "monitoring_alertmanager",
-		stackId: "monitoring",
-		status: "stopped",
-		replicas: 0,
-		image: "prom/alertmanager",
-		ports: [{ published: 9093, target: 9093, protocol: "tcp" }],
-	},
-	{
-		id: "external-service",
-		name: "external-stack_service",
-		stackId: "external-stack",
-		status: "running",
-		replicas: 1,
-		image: "nginx:latest",
-		ports: [{ published: 8081, target: 80, protocol: "tcp" }],
-	},
-];
+function dedupePorts(ports: Port[]): Port[] {
+	const seen = new Set();
+	return ports.filter((p) => {
+		const key = `${p.published}:${p.target}:${p.protocol}`;
+		if (seen.has(key)) return false;
+		seen.add(key);
+		return true;
+	});
+}
+
+export async function isSwarmActive(): Promise<boolean> {
+	try {
+		const info = await docker.info();
+		return info?.Swarm?.LocalNodeState === "active";
+	} catch {
+		return false;
+	}
+}
+
+// Helper: parse stack name from service name (Swarm convention: stack_service)
+function getStackIdFromServiceName(name: string): string {
+	const idx = name.indexOf("_");
+	return idx > 0 ? name.slice(0, idx) : name;
+}
+
+function isContainerTaskSpec(
+	task: unknown,
+): task is { ContainerSpec: { Image: string } } {
+	if (typeof task !== "object" || task === null) return false;
+	const rec = task as Record<string, unknown>;
+	if (!("ContainerSpec" in rec)) return false;
+	const containerSpec = (rec as { ContainerSpec?: unknown }).ContainerSpec as
+		| Record<string, unknown>
+		| undefined;
+	return !!containerSpec && typeof containerSpec.Image === "string";
+}
+
+async function getSwarmServices(): Promise<Service[]> {
+	const services: Service[] = [];
+	const dockerServices = await docker.listServices();
+	for (const svc of dockerServices) {
+		const spec = svc.Spec;
+		if (!spec) continue;
+		const name = spec.Name || "";
+		const stackId = getStackIdFromServiceName(name);
+		// Get replicas
+		let replicas = 1;
+		if (
+			spec.Mode?.Replicated &&
+			typeof spec.Mode.Replicated.Replicas === "number"
+		) {
+			replicas = spec.Mode.Replicated.Replicas;
+		}
+		// Get image
+		let image = "";
+		if (isContainerTaskSpec(spec.TaskTemplate)) {
+			image = spec.TaskTemplate.ContainerSpec.Image;
+		}
+		// Get ports
+		let ports: Port[] = [];
+		const endpoint = svc.Endpoint;
+		if (endpoint?.Ports) {
+			for (const p of endpoint.Ports) {
+				if (
+					typeof p.PublishedPort === "number" &&
+					typeof p.TargetPort === "number" &&
+					p.Protocol
+				) {
+					ports.push({
+						published: p.PublishedPort,
+						target: p.TargetPort,
+						protocol:
+							p.Protocol === "tcp" || p.Protocol === "udp" ? p.Protocol : "tcp",
+					});
+				}
+			}
+		}
+		ports = dedupePorts(ports);
+		// Status: if replicas > 0, running
+		const status = replicas > 0 ? "running" : "stopped";
+		services.push({
+			id: svc.ID,
+			name,
+			stackId,
+			status,
+			replicas,
+			image,
+			ports,
+		});
+	}
+	return services;
+}
+
+async function getStandaloneServices(): Promise<Service[]> {
+	const containers = await docker.listContainers({ all: true });
+	// Group by compose project (stackId)
+	const services: Service[] = [];
+	for (const c of containers) {
+		const stackId = c.Labels["com.docker.compose.project"] || "standalone";
+		const name = c.Names?.[0]?.replace(/^\//, "") || c.Id;
+		const status = c.State === "running" ? "running" : "stopped";
+		// Ports
+		let ports: Port[] = [];
+		for (const p of c.Ports || []) {
+			if (
+				typeof p.PublicPort === "number" &&
+				typeof p.PrivatePort === "number"
+			) {
+				ports.push({
+					published: p.PublicPort,
+					target: p.PrivatePort,
+					protocol: p.Type === "tcp" || p.Type === "udp" ? p.Type : "tcp",
+				});
+			}
+		}
+		ports = dedupePorts(ports);
+		services.push({
+			id: c.Id,
+			name,
+			stackId,
+			status,
+			replicas: 1,
+			image: c.Image,
+			ports,
+		});
+	}
+	return services;
+}
 
 export async function getServices(): Promise<Service[]> {
-	// Simulate API delay
-	await new Promise((resolve) => setTimeout(resolve, 100));
-	return mockServices;
+	if (await isSwarmActive()) {
+		return await getSwarmServices();
+	}
+	return await getStandaloneServices();
 }
 
 export async function getServicesByStackId(
 	stackId: string,
 ): Promise<Service[]> {
-	// Simulate API delay
-	await new Promise((resolve) => setTimeout(resolve, 100));
-	return mockServices.filter((service) => service.stackId === stackId);
+	const all = await getServices();
+	return all.filter((svc) => svc.stackId === stackId);
 }
 
 export async function getServiceById(id: string): Promise<Service | undefined> {
-	// Simulate API delay
-	await new Promise((resolve) => setTimeout(resolve, 100));
-	return mockServices.find((service) => service.id === id);
+	const all = await getServices();
+	return all.find((svc) => svc.id === id);
 }

@@ -1,0 +1,16 @@
+---
+import Badge from "../../components/Badge.astro";
+import Button from "../../components/Button.astro";
+import Card from "../../components/Card.astro";
+import Input from "../../components/Input.astro";
+import Layout from "../../layouts/Layout.astro";
+import CreateStackForm from "../../react/CreateStackForm";
+---
+
+<Layout title="Create Stack">
+  <div class="max-w-2xl mx-auto mt-8">
+    <Card>
+      <CreateStackForm client:only="react" />
+    </Card>
+  </div>
+</Layout>

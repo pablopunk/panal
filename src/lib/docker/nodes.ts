@@ -1,3 +1,7 @@
+import Docker from "dockerode";
+
+const docker = new Docker();
+
 // Mock data for Docker Swarm nodes
 
 export interface Node {
@@ -21,77 +25,82 @@ export interface Node {
 	services: string[];
 }
 
-const mockNodes: Node[] = [
-	{
-		id: "node1",
-		hostname: "panal-manager-01",
-		status: "ready",
-		role: "manager",
-		leader: true,
-		cpu: {
-			cores: 4,
-			usage: 25,
-		},
-		memory: {
-			total: "8 GB",
-			usage: 40,
-		},
-		disk: {
-			total: "100 GB",
-			usage: 30,
-		},
-		services: ["web-stack_web", "web-stack_api", "monitoring_prometheus"],
-	},
-	{
-		id: "node2",
-		hostname: "panal-worker-01",
-		status: "ready",
-		role: "worker",
-		leader: false,
-		cpu: {
-			cores: 2,
-			usage: 60,
-		},
-		memory: {
-			total: "4 GB",
-			usage: 75,
-		},
-		disk: {
-			total: "50 GB",
-			usage: 45,
-		},
-		services: ["web-stack_redis", "db-stack_postgres", "monitoring_grafana"],
-	},
-	{
-		id: "node3",
-		hostname: "panal-worker-02",
-		status: "down",
-		role: "worker",
-		leader: false,
-		cpu: {
-			cores: 2,
-			usage: 0,
-		},
-		memory: {
-			total: "4 GB",
-			usage: 0,
-		},
-		disk: {
-			total: "50 GB",
-			usage: 60,
-		},
-		services: [],
-	},
-];
+async function isSwarmActive(): Promise<boolean> {
+	try {
+		const info = await docker.info();
+		return info?.Swarm?.LocalNodeState === "active";
+	} catch {
+		return false;
+	}
+}
 
 export async function getNodes(): Promise<Node[]> {
-	// Simulate API delay
-	await new Promise((resolve) => setTimeout(resolve, 100));
-	return mockNodes;
+	if (await isSwarmActive()) {
+		const nodes: Node[] = [];
+		const dockerNodes = await docker.listNodes();
+		const services = await docker.listServices();
+		for (const n of dockerNodes) {
+			const desc = n.Description;
+			const status = n.Status;
+			const managerStatus = n.ManagerStatus;
+			const nodeServices = services
+				.map((svc) => svc.Spec?.Name)
+				.filter((name): name is string => typeof name === "string");
+			nodes.push({
+				id: n.ID,
+				hostname: desc?.Hostname || n.ID,
+				status: status?.State === "ready" ? "ready" : "down",
+				role: n.Spec?.Role === "manager" ? "manager" : "worker",
+				leader: !!managerStatus?.Leader,
+				cpu: {
+					cores: desc?.Resources?.NanoCPUs ? desc.Resources.NanoCPUs / 1e9 : 0,
+					usage: 0,
+				},
+				memory: {
+					total: desc?.Resources?.MemoryBytes
+						? `${Math.round(desc.Resources.MemoryBytes / 1024 / 1024)} MB`
+						: "-",
+					usage: 0,
+				},
+				disk: {
+					total: "-",
+					usage: 0,
+				},
+				services: nodeServices,
+			});
+		}
+		return nodes;
+	}
+	// Standalone: just show the local Docker host
+	const info = await docker.info();
+	const containers = await docker.listContainers({ all: true });
+	return [
+		{
+			id: info.ID || "local",
+			hostname: info.Name || "localhost",
+			status: "ready",
+			role: "manager",
+			leader: true,
+			cpu: {
+				cores: info.NCPU || 0,
+				usage: 0,
+			},
+			memory: {
+				total: info.MemTotal
+					? `${Math.round(info.MemTotal / 1024 / 1024)} MB`
+					: "-",
+				usage: 0,
+			},
+			disk: {
+				total: "-",
+				usage: 0,
+			},
+			services: containers.map((c) => c.Names?.[0]?.replace(/^\//, "") || c.Id),
+		},
+	];
 }
 
 export async function getNodeById(id: string): Promise<Node | undefined> {
-	// Simulate API delay
-	await new Promise((resolve) => setTimeout(resolve, 100));
-	return mockNodes.find((node) => node.id === id);
+	const nodes = await getNodes();
+	return nodes.find((node) => node.id === id);
 }

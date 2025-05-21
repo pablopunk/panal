@@ -1,49 +1,58 @@
 // Authentication utilities
 
-interface User {
-	username: string;
-	password: string; // In a real app, this would be hashed
+import crypto from "node:crypto";
+import { type User, readDb, writeDb } from "./db";
+
+function hashPassword(password: string): string {
+	return crypto.createHash("sha256").update(password).digest("hex");
 }
 
 // Mock user database
 const users: User[] = [];
 
-export function isSetupComplete(): boolean {
-	return users.length > 0;
+export async function isSetupComplete(): Promise<boolean> {
+	const db = await readDb();
+	return db.users.length > 0;
 }
 
-export function createUser(username: string, password: string): boolean {
-	// Check if username already exists
-	if (users.some((user) => user.username === username)) {
+export async function createUser(
+	username: string,
+	password: string,
+): Promise<boolean> {
+	const db = await readDb();
+	if (db.users.some((user) => user.username === username)) {
 		return false;
 	}
-
-	// In a real app, you would hash the password here
-	users.push({ username, password });
+	db.users.push({ username, password: hashPassword(password) });
+	await writeDb(db);
 	return true;
 }
 
-export function validateUser(username: string, password: string): boolean {
-	// In a real app, you would compare with hashed password
-	return users.some(
-		(user) => user.username === username && user.password === password,
+export async function validateUser(
+	username: string,
+	password: string,
+): Promise<boolean> {
+	const db = await readDb();
+	const hashed = hashPassword(password);
+	return db.users.some(
+		(user) => user.username === username && user.password === hashed,
 	);
 }
 
-export function updateUserPassword(
+export async function updateUserPassword(
 	username: string,
 	currentPassword: string,
 	newPassword: string,
-): boolean {
-	const userIndex = users.findIndex(
-		(user) => user.username === username && user.password === currentPassword,
+): Promise<boolean> {
+	const db = await readDb();
+	const hashedCurrent = hashPassword(currentPassword);
+	const userIndex = db.users.findIndex(
+		(user) => user.username === username && user.password === hashedCurrent,
 	);
-
 	if (userIndex === -1) {
 		return false;
 	}
-
-	// In a real app, you would hash the new password
-	users[userIndex].password = newPassword;
+	db.users[userIndex].password = hashPassword(newPassword);
+	await writeDb(db);
 	return true;
 }

@@ -23,21 +23,7 @@ export const GET: APIRoute = async () => {
 export const POST: APIRoute = async ({ request }) => {
 	try {
 		const data = await request.json();
-		const updated = updateSettings(data);
-
-		if (!updated) {
-			return new Response(
-				JSON.stringify({
-					success: false,
-					message: "Failed to update settings",
-				}),
-				{
-					status: 500,
-					headers: { "Content-Type": "application/json" },
-				},
-			);
-		}
-
+		await updateSettings(data);
 		return new Response(
 			JSON.stringify({
 				success: true,
