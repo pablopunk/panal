@@ -1,10 +1,10 @@
 ---
 interface Props {
-  title?: string;
-  class?: string;
+	title?: string;
+	class?: string;
 }
 
-const { title, class: className = '' } = Astro.props;
+const { title, class: className = "" } = Astro.props;
 ---
 
 <div class={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm ${className}`}>

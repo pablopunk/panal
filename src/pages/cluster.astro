@@ -1,11 +1,11 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Card from '../components/Card.astro';
-import Badge from '../components/Badge.astro';
-import { Icon } from 'astro-icon/components';
+import Layout from "../layouts/Layout.astro";
+import Card from "../components/Card.astro";
+import Badge from "../components/Badge.astro";
+import { Icon } from "astro-icon/components";
 
 // Mock data
-import { getNodes } from '../lib/docker/nodes';
+import { getNodes } from "../lib/docker/nodes";
 const nodes = await getNodes();
 ---
 

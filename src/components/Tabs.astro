@@ -1,16 +1,16 @@
 ---
 interface Tab {
-  id: string;
-  label: string;
+	id: string;
+	label: string;
 }
 
 interface Props {
-  tabs: Tab[];
-  activeTab: string;
-  baseUrl?: string;
+	tabs: Tab[];
+	activeTab: string;
+	baseUrl?: string;
 }
 
-const { tabs, activeTab, baseUrl = '' } = Astro.props;
+const { tabs, activeTab, baseUrl = "" } = Astro.props;
 ---
 
 <div class="border-b border-gray-200 dark:border-gray-800">
