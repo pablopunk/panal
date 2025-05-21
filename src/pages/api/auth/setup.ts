@@ -1,9 +1,13 @@
 import type { APIRoute } from "astro";
-import { createUser, isSetupComplete } from "../../../lib/auth";
+import { nanoid } from "nanoid";
+import { createSession, hashPassword } from "../../../lib/auth";
+import { addUser, getUsers } from "../../../lib/db";
 
 export const POST: APIRoute = async ({ request }) => {
 	try {
-		// Check if setup is already complete
+		// Only allow setup if no users exist
+		const users = await getUsers();
+		if (users.length > 0) {
 			return new Response(
 				JSON.stringify({ success: false, message: "Setup already completed" }),
 				{
@@ -30,17 +34,16 @@ export const POST: APIRoute = async ({ request }) => {
 		}
 
 		// Create the admin user
-		const userCreated = await createUser(username, password);
+		const user = {
+			id: nanoid(),
+			username,
+			passwordHash: hashPassword(password),
+			createdAt: new Date().toISOString(),
+		};
+		await addUser(user);
 
-		if (!userCreated) {
-			return new Response(
-				JSON.stringify({ success: false, message: "Failed to create user" }),
-				{
-					status: 500,
-					headers: { "Content-Type": "application/json" },
-				},
-			);
-		}
+		// Create session and set cookie
+		const sessionId = createSession(username);
 
 		// Handle swarm setup (still mock for now)
 		let swarmMessage = "";
@@ -76,7 +79,13 @@ export const POST: APIRoute = async ({ request }) => {
 				message: "Setup completed successfully",
 				swarmMessage,
 			}),
-			{ status: 200, headers: { "Content-Type": "application/json" } },
+			{
+				status: 200,
+				headers: {
+					"Content-Type": "application/json",
+					"Set-Cookie": `panal_session=${sessionId}; HttpOnly; Path=/; SameSite=Strict; Secure`,
+				},
+			},
 		);
 	} catch (error) {
 		return new Response(

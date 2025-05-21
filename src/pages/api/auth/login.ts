@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { validateUser } from "../../../lib/auth";
+import { createSession, verifyPassword } from "../../../lib/auth";
 
 export const POST: APIRoute = async ({ request }) => {
 	try {
@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
 			);
 		}
 
-		const isValid = await validateUser(username, password);
+		const isValid = await verifyPassword(username, password);
 
 		if (!isValid) {
 			return new Response(
@@ -34,13 +34,16 @@ export const POST: APIRoute = async ({ request }) => {
 			);
 		}
 
-		// In a real app, you would create a session or JWT token here
-
+		// Create session and set cookie
+		const sessionId = createSession(username);
 		return new Response(
 			JSON.stringify({ success: true, message: "Login successful" }),
 			{
 				status: 200,
-				headers: { "Content-Type": "application/json" },
+				headers: {
+					"Content-Type": "application/json",
+					"Set-Cookie": `panal_session=${sessionId}; HttpOnly; Path=/; SameSite=Strict; Secure`,
+				},
 			},
 		);
 	} catch (error) {

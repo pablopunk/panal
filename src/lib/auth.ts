@@ -1,58 +1,70 @@
 // Authentication utilities
 
 import crypto from "node:crypto";
-import { type User, readDb, writeDb } from "./db";
+import type { APIRoute } from "astro";
+import { nanoid } from "nanoid";
+import { type User, addUser, getUsers } from "./db";
 
-function hashPassword(password: string): string {
+// In-memory session store (for simplicity; can be persisted if needed)
+const sessions = new Map<string, string>(); // sessionId -> username
+
+export function hashPassword(password: string): string {
 	return crypto.createHash("sha256").update(password).digest("hex");
 }
 
-// Mock user database
-const users: User[] = [];
-
-export async function isSetupComplete(): Promise<boolean> {
-	const db = await readDb();
-	return db.users.length > 0;
-}
-
-export async function createUser(
+export async function verifyPassword(
 	username: string,
 	password: string,
 ): Promise<boolean> {
-	const db = await readDb();
-	if (db.users.some((user) => user.username === username)) {
-		return false;
-	}
-	db.users.push({ username, password: hashPassword(password) });
-	await writeDb(db);
-	return true;
+	const users = await getUsers();
+	const user = users.find((u: User) => u.username === username);
+	if (!user) return false;
+	return user.passwordHash === hashPassword(password);
 }
 
-export async function validateUser(
-	username: string,
-	password: string,
-): Promise<boolean> {
-	const db = await readDb();
-	const hashed = hashPassword(password);
-	return db.users.some(
-		(user) => user.username === username && user.password === hashed,
-	);
+export function createSession(username: string): string {
+	const sessionId = nanoid(32);
+	sessions.set(sessionId, username);
+	return sessionId;
 }
 
-export async function updateUserPassword(
-	username: string,
-	currentPassword: string,
-	newPassword: string,
+export function getSession(sessionId: string): string | undefined {
+	return sessions.get(sessionId);
+}
+
+export function destroySession(sessionId: string) {
+	sessions.delete(sessionId);
+}
+
+export function getSessionIdFromCookie(
+	cookieHeader: string | undefined,
+): string | undefined {
+	if (!cookieHeader) return undefined;
+	const match = cookieHeader.match(/panal_session=([^;]+)/);
+	return match ? match[1] : undefined;
+}
+
+export async function isAuthenticated(
+	cookieHeader: string | undefined,
 ): Promise<boolean> {
-	const db = await readDb();
-	const hashedCurrent = hashPassword(currentPassword);
-	const userIndex = db.users.findIndex(
-		(user) => user.username === username && user.password === hashedCurrent,
-	);
-	if (userIndex === -1) {
-		return false;
-	}
-	db.users[userIndex].password = hashPassword(newPassword);
-	await writeDb(db);
-	return true;
+	const sessionId = getSessionIdFromCookie(cookieHeader);
+	if (!sessionId) return false;
+	const username = getSession(sessionId);
+	if (!username) return false;
+	const users = await getUsers();
+	return users.some((u: User) => u.username === username);
+}
+
+// Middleware for API route protection
+export function withAuth(apiHandler: APIRoute): APIRoute {
+	return async (ctx) => {
+		const cookie = ctx.request.headers.get("cookie") || undefined;
+		if (!(await isAuthenticated(cookie))) {
+			return new Response(JSON.stringify({ error: "Unauthorized" }), {
+				status: 401,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+		return apiHandler(ctx);
+	};
 }

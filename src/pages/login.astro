@@ -1,14 +1,13 @@
 ---
 import { Icon } from "astro-icon/components";
-import Layout from "../layouts/Layout.astro";
-import Button from "../react/Button";
+import EmptyLayout from "../layouts/EmptyLayout.astro";
 import Card from "../react/Card";
-import Input from "../react/Input";
+import LoginForm from "../react/LoginForm";
 ---
 
-<Layout title="Login">
-  <div class="flex items-center justify-center min-h-screen p-6">
-    <Card client:only="react" className="w-full max-w-md">
+<EmptyLayout title="Login">
+  <div class="flex w-full justify-center">
+    <Card client:only="react" className="w-full md:w-2/3 max-w-xl">
       <div class="text-center mb-6">
         <div class="flex justify-center mb-2">
           <Icon name="lucide:box" class="h-12 w-12 text-emerald-600" />
@@ -18,24 +17,7 @@ import Input from "../react/Input";
           Docker Swarm Management UI
         </p>
       </div>
-
-      <form class="space-y-4">
-        <Input client:only="react" label="Username" name="username" required />
-
-        <Input
-          client:only="react"
-          type="password"
-          label="Password"
-          name="password"
-          required
-        />
-
-        <div class="pt-4">
-          <Button client:only="react" type="submit" className="w-full">
-            Login
-          </Button>
-        </div>
-      </form>
+      <LoginForm client:only="react" />
     </Card>
   </div>
-</Layout>
+</EmptyLayout>

@@ -3,61 +3,64 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const DB_LOCATION = process.env.DB_LOCATION || path.join("./data", "db.json");
-
-export interface AppSettings {
-	hostname: string;
-}
+const DB_LOCATION = process.env.DB_LOCATION || "./data";
+const DB_FILE = path.join(DB_LOCATION, "db.json");
 
 export interface User {
-	username: string;
-	password: string; // hashed
+		id: string;
+		username: string;
+		passwordHash: string;
+		createdAt: string;
+	}
+
+export interface Settings {
+	[key: string]: unknown;
 }
 
-export interface DBData {
+export interface DbData {
 	users: User[];
-	settings: AppSettings;
+	settings: Settings;
 }
-
-const defaultData: DBData = {
-	users: [],
-	settings: { hostname: "localhost" },
-};
 
 async function ensureDbFile() {
 	try {
-		await fs.access(DB_LOCATION);
+		await fs.mkdir(DB_LOCATION, { recursive: true });
+		await fs.access(DB_FILE);
 	} catch {
-		// Create directory if needed
-		await fs.mkdir(path.dirname(DB_LOCATION), { recursive: true });
-		await fs.writeFile(DB_LOCATION, JSON.stringify(defaultData, null, 2));
+		const initial: DbData = { users: [], settings: {} };
+		await fs.writeFile(DB_FILE, JSON.stringify(initial, null, 2));
 	}
 }
 
-export async function readDb(): Promise<DBData> {
+export async function getDb(): Promise<DbData> {
 	await ensureDbFile();
-	const raw = await fs.readFile(DB_LOCATION, "utf-8");
-	try {
-		return JSON.parse(raw);
-	} catch {
-		return { ...defaultData };
-	}
+	const raw = await fs.readFile(DB_FILE, "utf-8");
+	return JSON.parse(raw);
 }
 
-export async function writeDb(data: DBData): Promise<void> {
+export async function saveDb(data: DbData) {
 	await ensureDbFile();
-	await fs.writeFile(DB_LOCATION, JSON.stringify(data, null, 2));
+	await fs.writeFile(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-export async function getSettings(): Promise<AppSettings> {
-	const db = await readDb();
+export async function getUsers(): Promise<User[]> {
+	const db = await getDb();
+	return db.users;
+}
+
+export async function addUser(user: User) {
+	const db = await getDb();
+	db.users.push(user);
+	await saveDb(db);
+}
+
+export async function getSettings(): Promise<Settings> {
+	const db = await getDb();
 	return db.settings;
 }
 
-export async function updateSettings(
-	settings: Partial<AppSettings>,
-): Promise<void> {
-	const db = await readDb();
+export async function updateSettings(settings: Settings) {
+	const db = await getDb();
 	db.settings = { ...db.settings, ...settings };
-	await writeDb(db);
+	await saveDb(db);
 }

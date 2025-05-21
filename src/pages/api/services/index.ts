@@ -1,5 +1,9 @@
 import type { APIRoute } from "astro";
-import { type Service, getServices } from "../../../lib/docker/services";
+import {
+	type Service,
+	getServices,
+	getServicesByStackId,
+} from "../../../lib/docker/services";
 
 export const GET: APIRoute = async ({ url }) => {
 	try {
@@ -27,5 +31,3 @@ export const GET: APIRoute = async ({ url }) => {
 	}
 };
 
-// Import this at the top of the file
-import { getServicesByStackId } from "../../../lib/docker/services";

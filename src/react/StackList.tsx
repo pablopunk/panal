@@ -104,8 +104,9 @@ export default function StackList() {
 			const stacksRes = await fetch("/api/stacks");
 			const data = await stacksRes.json();
 			setStacks(data.data);
-		} catch (err: any) {
-			toast.error(err.message || "Failed to remove stack");
+		} catch (err: unknown) {
+			const error = err as Error;
+			toast.error(error.message || "Failed to remove stack");
 		} finally {
 			setRemoving(false);
 		}
