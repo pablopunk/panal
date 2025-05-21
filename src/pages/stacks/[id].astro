@@ -1,0 +1,165 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Tabs from '../../components/Tabs.astro';
+import Button from '../../components/Button.astro';
+import Badge from '../../components/Badge.astro';
+import Card from '../../components/Card.astro';
+import { Icon } from 'astro-icon/components';
+
+// Get stack ID from URL
+const { id } = Astro.params;
+const tab = Astro.url.searchParams.get('tab') || 'services';
+
+// Mock data
+import { getStackById } from '../../lib/docker/stacks';
+import { getServicesByStackId } from '../../lib/docker/services';
+
+const stack = await getStackById(id || '');
+const services = await getServicesByStackId(id || '');
+
+let tabs = [];
+if (!stack) {
+   return Astro.redirect('/404');
+} else {
+  tabs = [
+    { id: 'services', label: 'Services' },
+    { id: 'edit', label: 'Edit' },
+    { id: 'logs', label: 'Logs' }
+  ];
+}
+
+---
+
+<Layout title={stack.name}>
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-2">
+      <a href="/" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+        <Icon name="lucide:arrow-left" class="h-4 w-4" />
+      </a>
+      <h1 class="text-2xl font-bold">{stack.name}</h1>
+      <Badge variant={stack.status === 'running' ? 'success' : stack.status === 'partial' ? 'warning' : 'danger'}>
+        {stack.status}
+      </Badge>
+      {stack.type === 'swarm' ? (
+        <Badge variant="info">Swarm</Badge>
+      ) : (
+        <Badge>Standalone</Badge>
+      )}
+    </div>
+    
+    <div class="flex gap-2 mb-6">
+      {stack.managedBy === 'panal' && (
+        <>
+          <Button variant={stack.status === 'running' ? 'danger' : 'primary'} size="sm">
+            <Icon name={stack.status === 'running' ? 'lucide:stop-circle' : 'lucide:play'} class="h-4 w-4 mr-1" />
+            {stack.status === 'running' ? 'Stop' : 'Start'}
+          </Button>
+          <Button variant="secondary" size="sm">
+            <Icon name="lucide:refresh-cw" class="h-4 w-4 mr-1" />
+            Restart
+          </Button>
+        </>
+      )}
+    </div>
+
+    <Card class="mb-6">
+      <div class="text-sm">
+        <div class="font-medium mb-2">Deployment Status</div>
+        <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded font-mono text-xs overflow-auto max-h-32">
+          {stack.status === 'running' 
+            ? 'Stack deployed successfully.' 
+            : 'Stack deployment failed. Check logs for details.'}
+        </div>
+      </div>
+    </Card>
+
+    <Tabs tabs={tabs} activeTab={tab} baseUrl={`/stacks/${id}`} />
+  </div>
+
+  {tab === 'services' && (
+    <div class="space-y-4">
+      {services.map(service => (
+        <Card class="hover:border-emerald-500 transition-colors">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="text-lg font-medium mb-2">{service.name}</h3>
+              <div class="flex items-center gap-2 mb-4">
+                <Badge variant={service.status === 'running' ? 'success' : 'danger'}>
+                  {service.status}
+                </Badge>
+                <span class="text-sm text-gray-500 dark:text-gray-400">
+                  {service.replicas} replica{service.replicas !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          {service.ports.length > 0 && (
+            <div class="mt-4">
+              <div class="text-sm font-medium mb-2">Ports</div>
+              <div class="flex flex-wrap gap-2">
+                {service.ports.map(port => (
+                  <a 
+                    href={`http://localhost:${port.published}`} 
+                    target="_blank" 
+                    class="inline-flex items-center px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-sm"
+                  >
+                    <Icon name="lucide:external-link" class="h-3 w-3 mr-1" />
+                    {port.published}:{port.target}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </Card>
+      ))}
+    </div>
+  )}
+
+  {tab === 'edit' && (
+    <Card>
+      <div class="space-y-4">
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-lg font-medium">docker-compose.yml</h3>
+            <Button variant="outline" size="sm">
+              <Icon name="lucide:save" class="h-4 w-4 mr-1" />
+              Save
+            </Button>
+          </div>
+          <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-md h-64 font-mono text-sm">
+            # Monaco editor will be loaded here
+            version: '3.8'
+            services:
+              web:
+                image: nginx:alpine
+                ports:
+                  - "8080:80"
+          </div>
+        </div>
+        
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-lg font-medium">.env</h3>
+          </div>
+          <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-md h-64 font-mono text-sm">
+            # Monaco editor will be loaded here
+            NGINX_HOST=localhost
+            NGINX_PORT=80
+          </div>
+        </div>
+      </div>
+    </Card>
+  )}
+
+  {tab === 'logs' && (
+    <Card>
+      <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-md h-96 font-mono text-sm overflow-auto">
+        <div class="text-green-600 dark:text-green-400">[web.1] Starting nginx...</div>
+        <div class="text-green-600 dark:text-green-400">[web.1] Nginx started successfully</div>
+        <div>[web.1] 172.17.0.1 - - [21/May/2023:12:34:56 +0000] "GET / HTTP/1.1" 200 615 "-" "Mozilla/5.0"</div>
+        <div>[web.1] 172.17.0.1 - - [21/May/2023:12:35:02 +0000] "GET /favicon.ico HTTP/1.1" 404 555 "-" "Mozilla/5.0"</div>
+      </div>
+    </Card>
+  )}
+</Layout>

@@ -1,0 +1,98 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+import Input from '../components/Input.astro';
+import Button from '../components/Button.astro';
+import { Icon } from 'astro-icon/components';
+---
+
+<Layout title="Setup">
+  <div class="flex items-center justify-center min-h-screen p-6">
+    <Card class="w-full max-w-md">
+      <div class="text-center mb-6">
+        <div class="flex justify-center mb-2">
+          <Icon name="lucide:box" class="h-12 w-12 text-emerald-600" />
+        </div>
+        <h1 class="text-2xl font-bold">Welcome to Panal</h1>
+        <p class="text-gray-500 dark:text-gray-400">Docker Swarm Management UI</p>
+      </div>
+      
+      <form class="space-y-4">
+        <div class="space-y-4">
+          <h2 class="text-lg font-medium">Create Admin User</h2>
+          
+          <Input 
+            label="Username" 
+            name="username" 
+            required
+          />
+          
+          <Input 
+            type="password" 
+            label="Password" 
+            name="password" 
+            required
+          />
+          
+          <Input 
+            type="password" 
+            label="Confirm Password" 
+            name="confirmPassword" 
+            required
+          />
+        </div>
+        
+        <div class="space-y-4 pt-4">
+          <h2 class="text-lg font-medium">Docker Swarm</h2>
+          
+          <div class="space-y-2">
+            <div class="flex items-center">
+              <input type="radio" id="init-swarm" name="swarm-action" value="init" class="mr-2" checked />
+              <label for="init-swarm" class="text-sm font-medium">Initialize a new swarm</label>
+            </div>
+            <div class="flex items-center">
+              <input type="radio" id="join-swarm" name="swarm-action" value="join" class="mr-2" />
+              <label for="join-swarm" class="text-sm font-medium">Join an existing swarm</label>
+            </div>
+            <div class="flex items-center">
+              <input type="radio" id="skip-swarm" name="swarm-action" value="skip" class="mr-2" />
+              <label for="skip-swarm" class="text-sm font-medium">Skip (use standalone Docker)</label>
+            </div>
+          </div>
+          
+          <div id="join-token-container" class="hidden">
+            <Input 
+              label="Swarm Join Token" 
+              name="joinToken" 
+              placeholder="docker swarm join-token worker"
+            />
+          </div>
+        </div>
+        
+        <div class="pt-4">
+          <Button type="submit" class="w-full">
+            Complete Setup
+          </Button>
+        </div>
+      </form>
+    </Card>
+  </div>
+</Layout>
+
+<script>
+  const swarmActionRadios = document.querySelectorAll('input[name="swarm-action"]');
+  const joinTokenContainer = document.getElementById('join-token-container');
+  
+  if (swarmActionRadios && joinTokenContainer) {
+    swarmActionRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.value === 'join') {
+          joinTokenContainer.classList.remove('hidden');
+        } else {
+          joinTokenContainer.classList.add('hidden');
+        }
+      });
+    });
+  }
+</script>

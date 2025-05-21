@@ -1,0 +1,57 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+import Button from '../components/Button.astro';
+import { Icon } from 'astro-icon/components';
+---
+
+<Layout title="Docker Logs">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold">Docker Logs</h1>
+    <p class="text-gray-500 dark:text-gray-400">Docker daemon logs</p>
+  </div>
+
+  <Card>
+    <div class="flex justify-end mb-4">
+      <Button variant="outline" size="sm" id="refresh-logs">
+        <Icon name="lucide:refresh-cw" class="h-4 w-4 mr-1" />
+        Refresh
+      </Button>
+    </div>
+    <div id="logs" class="bg-gray-100 dark:bg-gray-800 p-4 rounded-md h-[70vh] font-mono text-sm overflow-auto">
+      <div class="text-gray-500">May 21 12:34:56 panal dockerd[123]: time="2023-05-21T12:34:56.789012345Z" level=info msg="Starting up"</div>
+      <div class="text-gray-500">May 21 12:34:57 panal dockerd[123]: time="2023-05-21T12:34:57.789012345Z" level=info msg="Loading containers: start."</div>
+      <div class="text-gray-500">May 21 12:34:58 panal dockerd[123]: time="2023-05-21T12:34:58.789012345Z" level=info msg="Loading containers: done."</div>
+      <div class="text-gray-500">May 21 12:34:59 panal dockerd[123]: time="2023-05-21T12:34:59.789012345Z" level=info msg="Docker daemon" commit=abcdef1 graphdriver(s)=overlay2 version=20.10.17</div>
+      <div class="text-gray-500">May 21 12:35:00 panal dockerd[123]: time="2023-05-21T12:35:00.789012345Z" level=info msg="Daemon has completed initialization"</div>
+      <div class="text-gray-500">May 21 12:35:01 panal dockerd[123]: time="2023-05-21T12:35:01.789012345Z" level=info msg="API listen on /var/run/docker.sock"</div>
+    </div>
+  </Card>
+</Layout>
+
+<script>
+  const refreshButton = document.getElementById('refresh-logs');
+  const logsContainer = document.getElementById('logs');
+  
+  if (refreshButton && logsContainer) {
+    refreshButton.addEventListener('click', () => {
+      // Add a new log entry with current timestamp
+      const now = new Date();
+      const timestamp = now.toLocaleString('en-US', { 
+        month: 'short', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: false
+      });
+      
+      const logEntry = document.createElement('div');
+      logEntry.className = 'text-gray-500';
+      logEntry.textContent = `${timestamp} panal dockerd[123]: time="${now.toISOString()}" level=info msg="Refreshed logs"`;
+      
+      logsContainer.appendChild(logEntry);
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+    });
+  }
+</script>

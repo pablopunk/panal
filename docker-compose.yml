@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  panal:
+    build: .
+    container_name: panal
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data/db:/data/db
+      - ./data/stacks:/data/stacks
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DB_LOCATION=/data/db
+      - STACKS_DIR=/data/stacks

@@ -1,0 +1,85 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+import Input from '../components/Input.astro';
+import Button from '../components/Button.astro';
+---
+
+<Layout title="Settings">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold">Settings</h1>
+    <p class="text-gray-500 dark:text-gray-400">Configure Panal</p>
+  </div>
+
+  <div class="grid gap-6 max-w-2xl">
+    <Card title="User Settings">
+      <form class="space-y-4">
+        <Input 
+          label="Username" 
+          name="username" 
+          value="admin" 
+          required
+        />
+        
+        <Input 
+          type="password" 
+          label="Current Password" 
+          name="currentPassword" 
+          required
+        />
+        
+        <Input 
+          type="password" 
+          label="New Password" 
+          name="newPassword"
+        />
+        
+        <Input 
+          type="password" 
+          label="Confirm New Password" 
+          name="confirmPassword"
+        />
+        
+        <div class="pt-2">
+          <Button type="submit">Save User Settings</Button>
+        </div>
+      </form>
+    </Card>
+    
+    <Card title="Application Settings">
+      <form class="space-y-4">
+        <Input 
+          label="Hostname" 
+          name="hostname" 
+          value="localhost" 
+          required
+        />
+        
+        <div class="pt-2">
+          <Button type="submit">Save Application Settings</Button>
+        </div>
+      </form>
+    </Card>
+    
+    <Card title="Environment Variables">
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div class="font-medium mb-2 text-sm">DB_LOCATION</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">/data/db</div>
+          </div>
+          
+          <div>
+            <div class="font-medium mb-2 text-sm">STACKS_DIR</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">/data/stacks</div>
+          </div>
+        </div>
+        
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          Environment variables are set at container startup and cannot be changed here.
+          Update your docker-compose.yml or docker run command to modify these values.
+        </div>
+      </div>
+    </Card>
+  </div>
+</Layout>

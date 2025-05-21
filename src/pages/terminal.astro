@@ -1,0 +1,86 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+---
+
+<Layout title="Terminal">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold">Terminal</h1>
+    <p class="text-gray-500 dark:text-gray-400">Host terminal access</p>
+  </div>
+
+  <Card>
+    <div id="terminal" class="h-[70vh] bg-black text-white font-mono text-sm p-4 rounded-md overflow-auto">
+      <div class="mb-2">Welcome to Panal Terminal</div>
+      <div class="mb-2">Type 'help' for a list of available commands</div>
+      <div class="flex">
+        <span class="text-green-400">root@panal:~$</span>
+        <input 
+          type="text" 
+          id="terminal-input" 
+          class="flex-1 bg-transparent border-none outline-none ml-2 text-white"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+  </Card>
+</Layout>
+
+<script>
+  const terminalInput = document.getElementById('terminal-input') as HTMLInputElement;
+  const terminal = document.getElementById('terminal');
+  
+  if (terminalInput && terminal) {
+    terminalInput.focus();
+    
+    // Click anywhere in the terminal to focus the input
+    terminal.addEventListener('click', () => {
+      terminalInput.focus();
+    });
+    
+    // Handle terminal input
+    terminalInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const command = terminalInput.value;
+        const outputLine = document.createElement('div');
+        outputLine.innerHTML = `<span class="text-green-400">root@panal:~$</span> ${command}`;
+        
+        // Insert the command line before the input line
+        terminal.insertBefore(outputLine, terminalInput.parentElement);
+        
+        // Process command (mock for now)
+        if (command.trim()) {
+          const responseElement = document.createElement('div');
+          
+          switch (command.trim()) {
+            case 'help':
+              responseElement.textContent = 'Available commands: help, ls, docker, clear';
+              break;
+            case 'ls':
+              responseElement.textContent = 'app  config  logs  stacks';
+              break;
+            case 'docker ps':
+              responseElement.textContent = 'CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES\n' +
+                                           '123456789abc   nginx     "nginx"    2m ago    Up 2m    80/tcp    web-1';
+              break;
+            case 'clear':
+              // Clear all elements except the input line
+              while (terminal.firstChild !== terminalInput.parentElement) {
+                terminal.removeChild(terminal.firstChild as Node);
+              }
+              terminalInput.value = '';
+              return;
+            default:
+              responseElement.textContent = `Command not found: ${command}`;
+          }
+          
+          terminal.insertBefore(responseElement, terminalInput.parentElement);
+        }
+        
+        // Clear input and scroll to bottom
+        terminalInput.value = '';
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+    });
+  }
+</script>
