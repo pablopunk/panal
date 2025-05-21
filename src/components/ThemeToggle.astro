@@ -1,22 +1,70 @@
 ---
-import { Icon } from 'astro-icon/components';
+import { Icon } from "astro-icon/components";
 ---
 
-<button id="theme-toggle" aria-label="Toggle Theme" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800">
-  <Icon name="lucide:sun" class="h-5 w-5 dark:hidden" />
-  <Icon name="lucide:moon" class="h-5 w-5 hidden dark:block" />
+<button id="theme-toggle" type="button">
+  <span class="light-mode">
+    <Icon name="lucide:sun" />
+  </span>
+  <span class="dark-mode">
+    <Icon name="lucide:moon" />
+  </span>
 </button>
 
-<script>
-  const themeToggle = document.getElementById('theme-toggle');
-  
-  themeToggle?.addEventListener('click', () => {
-    if (document.documentElement.classList.contains('dark')) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    }
+<script is:inline>
+  // Inline: not bundled. It  will execute as soon as possible
+  const STORAGE_THEME_KEY = "theme";
+  const DARK_THEME_CLASS = "dark";
+  const DARK = "dark";
+  const LIGHT = "light";
+  const root = document.documentElement;
+  let isDark = true;
+
+  const getUserPreferences = (localStorageKey) => {
+    if (localStorage && localStorage.getItem(localStorageKey))
+      return localStorage.getItem(localStorageKey);
+    if (window.matchMedia("(prefers-color-scheme: light)").matches)
+      return LIGHT;
+    return DARK;
+  };
+
+  function initTheme() {
+    const theme = getUserPreferences(STORAGE_THEME_KEY);
+    isDark = theme === DARK;
+    root.classList.toggle(DARK_THEME_CLASS, isDark);
+  }
+
+  function handleClick() {
+    isDark = !isDark;
+
+    root.classList.toggle(DARK_THEME_CLASS, isDark);
+    localStorage.setItem(STORAGE_THEME_KEY, isDark ? DARK : LIGHT);
+  }
+
+  function setButtonHandler() {
+    const button = document.getElementById("theme-toggle");
+    button?.addEventListener("click", () => handleClick());
+  }
+
+  // Initial navigation
+  initTheme();
+  setButtonHandler();
+
+  // On view transitions navigation
+  document.addEventListener("astro:after-swap", () => {
+    initTheme();
+    setButtonHandler();
   });
 </script>
+
+<style is:global>
+  :not(.dark) .light-mode {
+    display: none;
+  }
+  .dark .dark-mode {
+    display: none;
+  }
+  .dark .light-mode {
+    display: flex;
+  }
+</style>
