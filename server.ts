@@ -36,6 +36,8 @@ wss.on("connection", (ws: WebSocket, req) => {
 		fs.stat(logPath, (err, stats) => {
 			if (err) {
 				console.log(`[WS] fs.stat error for ${logPath}:`, err.message);
+				// clear the poller
+				clearInterval(poller);
 				return; // file might not exist yet
 			}
 			// Detect file replacement by inode change or truncation

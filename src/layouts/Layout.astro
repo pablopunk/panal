@@ -1,10 +1,10 @@
 ---
 import { ClientRouter } from "astro:transitions";
-import Header from "../components/Header.astro";
-import Sidebar from "../components/Sidebar.astro";
+import Header from "../react/Header";
+import Sidebar from "../react/Sidebar";
 
 interface Props {
-	title: string;
+  title: string;
 }
 
 const { title } = Astro.props;
@@ -25,9 +25,9 @@ const { title } = Astro.props;
     class="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50"
   >
     <div class="flex h-screen overflow-hidden">
-      <Sidebar />
+      <Sidebar client:only="react" />
       <div class="flex flex-col flex-1 overflow-hidden">
-        <Header />
+        <Header client:only="react" />
         <main class="flex-1 overflow-auto p-6">
           <slot />
         </main>

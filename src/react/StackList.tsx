@@ -21,7 +21,7 @@ function deepEqual<T>(a: T, b: T): boolean {
 	return JSON.stringify(a) === JSON.stringify(b);
 }
 
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 2000;
 
 export default function StackList() {
 	const [stacks, setStacks] = useState<Stack[] | null>(null);
@@ -120,7 +120,7 @@ export default function StackList() {
 	}: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
 		<button
 			type="button"
-			className="w-full text-left p-0 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-lg"
+			className="w-full text-left p-0 bg-transparent border-none active:outline-none hover:ring-2 hover:ring-emerald-500 rounded-lg"
 			onClick={onClick}
 			onKeyDown={onKeyDown}
 			{...props}

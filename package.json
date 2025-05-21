@@ -8,6 +8,7 @@
 		"start": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview",
+		"astro": "astro dev",
 		"ws-server": "bun --watch server.ts",
 		"lint:fix": "biome check --write src",
 		"lint": "biome check src"

@@ -1,9 +1,9 @@
 ---
 import { Icon } from "astro-icon/components";
-import Button from "../components/Button.astro";
-import Card from "../components/Card.astro";
-import Input from "../components/Input.astro";
 import Layout from "../layouts/Layout.astro";
+import Button from "../react/Button";
+import Card from "../react/Card";
+import Input from "../react/Input";
 ---
 
 <Layout title="Login">
@@ -14,27 +14,18 @@ import Layout from "../layouts/Layout.astro";
           <Icon name="lucide:box" class="h-12 w-12 text-emerald-600" />
         </div>
         <h1 class="text-2xl font-bold">Login to Panal</h1>
-        <p class="text-gray-500 dark:text-gray-400">Docker Swarm Management UI</p>
+        <p class="text-gray-500 dark:text-gray-400">
+          Docker Swarm Management UI
+        </p>
       </div>
-      
+
       <form class="space-y-4">
-        <Input 
-          label="Username" 
-          name="username" 
-          required
-        />
-        
-        <Input 
-          type="password" 
-          label="Password" 
-          name="password" 
-          required
-        />
-        
+        <Input label="Username" name="username" required />
+
+        <Input type="password" label="Password" name="password" required />
+
         <div class="pt-4">
-          <Button type="submit" class="w-full">
-            Login
-          </Button>
+          <Button type="submit" class="w-full"> Login </Button>
         </div>
       </form>
     </Card>

@@ -22,7 +22,7 @@ export default function Card({
 					<h3 className="text-lg font-medium">{title}</h3>
 				</div>
 			)}
-			<div className="p-6">{children}</div>
+			<div className="p-3">{children}</div>
 		</div>
 	);
 } 

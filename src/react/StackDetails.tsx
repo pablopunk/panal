@@ -281,6 +281,7 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 							}}
 							theme={monacoTheme}
 							aria-labelledby="compose-label"
+							className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800"
 						/>
 					</div>
 					<div className="mb-6">
@@ -299,6 +300,7 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 							}}
 							theme={monacoTheme}
 							aria-labelledby="env-label"
+							className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800"
 						/>
 					</div>
 					{editError && (
