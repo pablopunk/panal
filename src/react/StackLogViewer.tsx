@@ -2,9 +2,13 @@ import { useEffect, useRef, useState } from "react";
 
 interface StackLogViewerProps {
 	stackId: string;
+	className?: string;
 }
 
-export default function StackLogViewer({ stackId }: StackLogViewerProps) {
+export default function StackLogViewer({
+	stackId,
+	className,
+}: StackLogViewerProps) {
 	const [log, setLog] = useState("");
 	const [live, setLive] = useState(false);
 	const wsRef = useRef<WebSocket | null>(null);
@@ -13,7 +17,6 @@ export default function StackLogViewer({ stackId }: StackLogViewerProps) {
 		setLog("");
 		setLive(true);
 		const wsUrl = `ws://${window.location.host.replace(/:\d+$/, ":3001")}/ws/stack-log-feed?id=${stackId}`;
-		console.log("Connecting to log feed WebSocket:", wsUrl);
 		const ws = new WebSocket(wsUrl);
 		wsRef.current = ws;
 		ws.onopen = () => console.log("Log feed WebSocket opened");
@@ -35,7 +38,7 @@ export default function StackLogViewer({ stackId }: StackLogViewerProps) {
 	}, [stackId]);
 
 	return (
-		<div>
+		<div className={className}>
 			<div className="flex items-center gap-2 mb-2">
 				<span className="font-medium">Deployment Log</span>
 				{live && <span className="text-xs text-emerald-500">(live)</span>}

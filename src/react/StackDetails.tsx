@@ -1,4 +1,6 @@
+import Editor from "@monaco-editor/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Toaster, toast } from "sonner";
 import StackActionButtons from "./StackActionButtons";
 import StackLogViewer from "./StackLogViewer";
 
@@ -25,12 +27,47 @@ function deepEqual<T>(a: T, b: T): boolean {
 	return JSON.stringify(a) === JSON.stringify(b);
 }
 
+function getInitialTheme() {
+	if (typeof window !== "undefined") {
+		return document.documentElement.classList.contains("dark")
+			? "vs-dark"
+			: "light";
+	}
+	return "light";
+}
+
 export default function StackDetails({ stackId }: { stackId: string }) {
 	const [stack, setStack] = useState<Stack | null>(null);
 	const [services, setServices] = useState<Service[]>([]);
 	const [loading, setLoading] = useState(true);
 	const stackRef = useRef<Stack | null>(null);
 	const servicesRef = useRef<Service[]>([]);
+
+	// For editing
+	const [compose, setCompose] = useState("");
+	const [env, setEnv] = useState("");
+	const [editLoading, setEditLoading] = useState(false);
+	const [editError, setEditError] = useState("");
+	const [monacoTheme, setMonacoTheme] = useState(getInitialTheme());
+	const [editFetched, setEditFetched] = useState(false);
+
+	useEffect(() => {
+		setMonacoTheme(
+			document.documentElement.classList.contains("dark") ? "vs-dark" : "light",
+		);
+		const observer = new MutationObserver(() => {
+			setMonacoTheme(
+				document.documentElement.classList.contains("dark")
+					? "vs-dark"
+					: "light",
+			);
+		});
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["class"],
+		});
+		return () => observer.disconnect();
+	}, []);
 
 	useEffect(() => {
 		stackRef.current = stack;
@@ -53,6 +90,21 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 		setServices(data.data || []);
 	}, [stackId]);
 
+	// Fetch compose/env for editing
+	const fetchFiles = useCallback(async () => {
+		try {
+			const res = await fetch(`/api/stacks/${stackId}/files`);
+			const data = await res.json();
+			if (data.success) {
+				setCompose(data.data.compose);
+				setEnv(data.data.env);
+				setEditFetched(true);
+			}
+		} catch (err) {
+			setEditError("Failed to load stack files.");
+		}
+	}, [stackId]);
+
 	useEffect(() => {
 		fetchStack();
 		fetchServices();
@@ -73,6 +125,12 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 		return () => clearInterval(interval);
 	}, [stackId, fetchStack, fetchServices]);
 
+	useEffect(() => {
+		if (stack && stack.managedBy === "panal" && !editFetched) {
+			fetchFiles();
+		}
+	}, [stack, editFetched, fetchFiles]);
+
 	const handleAction = async (action: "start" | "stop" | "restart") => {
 		await fetch(`/api/stacks/${stackId}/action`, {
 			method: "POST",
@@ -84,10 +142,37 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 		fetchServices();
 	};
 
+	const handleSave = async () => {
+		setEditLoading(true);
+		setEditError("");
+		try {
+			const res = await fetch(`/api/stacks/${stackId}/files`, {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ compose, env }),
+			});
+			const data = await res.json();
+			if (data.success) {
+				toast.success("Stack updated and redeployed!");
+				fetchStack();
+				fetchServices();
+			} else {
+				setEditError(data.message || "Failed to update stack.");
+				toast.error(data.message || "Failed to update stack.");
+			}
+		} catch (err) {
+			setEditError("Failed to update stack.");
+			toast.error("Failed to update stack.");
+		} finally {
+			setEditLoading(false);
+		}
+	};
+
 	if (loading || !stack) return <div>Loading...</div>;
 
 	return (
 		<div>
+			<Toaster position="top-center" richColors />
 			<div className="flex items-center gap-2 mb-2">
 				<h1 className="text-2xl font-bold">{stack.name}</h1>
 				<span
@@ -117,7 +202,7 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 					onAction={handleAction}
 				/>
 			)}
-			<StackLogViewer stackId={stackId} />
+			<StackLogViewer stackId={stackId} className="mt-6" />
 			{/* Render services, etc. */}
 			<div className="mt-6">
 				<h2 className="text-lg font-semibold mb-2">Services</h2>
@@ -173,6 +258,62 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 					))}
 				</div>
 			</div>
+
+			{/* Edit section for Panal-managed stacks */}
+			{stack.managedBy === "panal" && (
+				<div className="mt-10">
+					<div className="mb-6">
+						<label
+							id="compose-label"
+							className="block text-sm font-medium mb-1"
+						>
+							docker-compose.yml
+						</label>
+						<Editor
+							height="200px"
+							defaultLanguage="yaml"
+							value={compose}
+							onChange={(v) => setCompose(v || "")}
+							options={{
+								minimap: { enabled: false },
+								fontSize: 14,
+								wordWrap: "on",
+							}}
+							theme={monacoTheme}
+							aria-labelledby="compose-label"
+						/>
+					</div>
+					<div className="mb-6">
+						<label id="env-label" className="block text-sm font-medium mb-1">
+							.env file
+						</label>
+						<Editor
+							height="100px"
+							defaultLanguage="ini"
+							value={env}
+							onChange={(v) => setEnv(v || "")}
+							options={{
+								minimap: { enabled: false },
+								fontSize: 14,
+								wordWrap: "on",
+							}}
+							theme={monacoTheme}
+							aria-labelledby="env-label"
+						/>
+					</div>
+					{editError && (
+						<div className="text-red-500 text-sm mb-2">{editError}</div>
+					)}
+					<button
+						type="button"
+						disabled={editLoading}
+						onClick={handleSave}
+						className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md transition-colors disabled:opacity-60"
+					>
+						{editLoading ? "Saving..." : "Save & Redeploy"}
+					</button>
+				</div>
+			)}
 		</div>
 	);
 } 
