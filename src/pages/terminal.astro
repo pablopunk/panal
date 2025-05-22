@@ -1,35 +1,63 @@
 ---
+import { Icon } from "astro-icon/components";
 import Layout from "../layouts/Layout.astro";
+import Button from "../react/Button";
 import Card from "../react/Card";
 ---
 
-<Layout title="Terminal">
+<Layout title="Terminal & Logs">
   <div class="mb-6">
-    <h1 class="text-2xl font-bold">Terminal</h1>
-    <p class="text-gray-500 dark:text-gray-400">Host terminal access</p>
+    <h1 class="text-2xl font-bold">Terminal & Docker Logs</h1>
+    <p class="text-gray-500 dark:text-gray-400">
+      Host terminal access and Docker daemon logs
+    </p>
   </div>
 
-  <Card>
-    <div
-      id="terminal"
-      class="h-[70vh] bg-black text-white font-mono text-sm p-4 rounded-md overflow-auto"
-    >
-      <div class="mb-2">Welcome to Panal Terminal</div>
-      <div class="mb-2">Type 'help' for a list of available commands</div>
-      <div class="flex">
-        <span class="text-green-400">root@panal:~$</span>
-        <input
-          type="text"
-          id="terminal-input"
-          class="flex-1 bg-transparent border-none outline-none ml-2 text-white"
-          autocomplete="off"
-        />
+  <div class="flex flex-col md:flex-col lg:flex-row gap-6">
+    <Card className="flex-1">
+      <div
+        id="terminal"
+        class="h-[40vh] lg:h-[70vh] bg-black text-white font-mono text-sm p-4 rounded-md overflow-auto"
+      >
+        <div class="mb-2">Welcome to Panal Terminal</div>
+        <div class="mb-2">Type 'help' for a list of available commands</div>
+        <div class="flex">
+          <span class="text-green-400">root@panal:~$</span>
+          <input
+            type="text"
+            id="terminal-input"
+            class="flex-1 bg-transparent border-none outline-none ml-2 text-white"
+            autocomplete="off"
+          />
+        </div>
       </div>
-    </div>
-  </Card>
+    </Card>
+    <Card className="flex-1" client:only="react">
+      <div class="flex justify-end mb-4">
+        <Button
+          client:only="react"
+          variant="outline"
+          size="sm"
+          id="refresh-logs"
+        >
+          <Icon name="lucide:refresh-cw" class="h-4 w-4 mr-1" />
+          Refresh
+        </Button>
+      </div>
+      <div
+        id="logs"
+        class="bg-gray-100 dark:bg-gray-800 p-4 rounded-md h-[40vh] lg:h-[70vh] font-mono text-sm overflow-auto"
+      >
+        <div id="logs-content" class="text-gray-500 whitespace-pre-wrap">
+          Loading logs...
+        </div>
+      </div>
+    </Card>
+  </div>
 </Layout>
 
 <script>
+  // Terminal logic
   const terminalInput = document.getElementById(
     "terminal-input"
   ) as HTMLInputElement;
@@ -88,6 +116,36 @@ import Card from "../react/Card";
         terminalInput.value = "";
         terminal.scrollTop = terminal.scrollHeight;
       }
+    });
+  }
+
+  // Docker logs fetch logic
+  async function fetchLogs() {
+    const logsContent = document.getElementById("logs-content");
+    if (logsContent) {
+      logsContent.textContent = "Loading logs...";
+      try {
+        const res = await fetch("/api/docker-logs");
+        if (res.ok) {
+          const text = await res.text();
+          logsContent.textContent = text || "No logs found.";
+        } else {
+          logsContent.textContent = "Failed to fetch logs.";
+        }
+      } catch {
+        logsContent.textContent = "Failed to fetch logs.";
+      }
+    }
+  }
+  fetchLogs();
+
+  // Logs refresh logic
+  const refreshButton = document.getElementById("refresh-logs");
+  const logsContainer = document.getElementById("logs");
+
+  if (refreshButton && logsContainer) {
+    refreshButton.addEventListener("click", () => {
+      fetchLogs();
     });
   }
 </script>

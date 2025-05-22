@@ -11,16 +11,10 @@ import React, { useState } from "react";
 
 const topNavItems = [
 	{ name: "Stacks", icon: <Layers className="h-6 w-6" />, href: "/" },
-	{ name: "Cluster", icon: <Network className="h-6 w-6" />, href: "/cluster" },
 	{
 		name: "Terminal",
 		icon: <Terminal className="h-6 w-6" />,
 		href: "/terminal",
-	},
-	{
-		name: "Docker Logs",
-		icon: <FileText className="h-6 w-6" />,
-		href: "/docker-logs",
 	},
 ];
 const bottomNavItems = [

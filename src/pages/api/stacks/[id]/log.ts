@@ -4,7 +4,7 @@ import type { APIRoute } from "astro";
 
 const STACKS_LOCATION = process.env.STACKS_LOCATION || "./stacks";
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
 	const { id } = params;
 	if (!id || typeof id !== "string") {
 		return new Response(
@@ -16,16 +16,48 @@ export const GET: APIRoute = async ({ params }) => {
 		);
 	}
 	const logPath = path.join(STACKS_LOCATION, id, "deploy.log");
+	const url = new URL(request.url);
+	const sinceParam = url.searchParams.get("since");
+	let since = 0;
+	if (sinceParam && !Number.isNaN(Number(sinceParam))) {
+		since = Number(sinceParam);
+	}
 	try {
-		const log = await fs.readFile(logPath, "utf-8");
-		return new Response(JSON.stringify({ success: true, log }), {
-			status: 200,
-			headers: { "Content-Type": "application/json" },
-		});
+		const stat = await fs.stat(logPath);
+		const fileSize = stat.size;
+		if (since >= fileSize) {
+			// No new data
+			return new Response(
+				JSON.stringify({ success: true, log: "", offset: fileSize }),
+				{
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				},
+			);
+		}
+		const fileHandle = await fs.open(logPath, "r");
+		const length = fileSize - since;
+		const buffer = Buffer.alloc(length);
+		await fileHandle.read(buffer, 0, length, since);
+		await fileHandle.close();
+		return new Response(
+			JSON.stringify({
+				success: true,
+				log: buffer.toString(),
+				offset: fileSize,
+			}),
+			{
+				status: 200,
+				headers: { "Content-Type": "application/json" },
+			},
+		);
 	} catch {
-		return new Response(JSON.stringify({ success: false, log: "" }), {
-			status: 404,
-			headers: { "Content-Type": "application/json" },
-		});
+		return new Response(
+			JSON.stringify({ success: false, log: "", offset: 0 }),
+			{
+				status: 404,
+				headers: { "Content-Type": "application/json" },
+			},
+		);
 	}
 };

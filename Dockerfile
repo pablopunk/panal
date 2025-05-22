@@ -3,25 +3,29 @@ FROM node:18-alpine
 # Create app directory
 WORKDIR /app
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Install dependencies
 COPY package*.json ./
-RUN npm ci
+COPY pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # Copy app source
 COPY . .
 
 # Build the app
-RUN npm run build
+RUN pnpm run build
 
 # Install Docker CLI
 RUN apk add --no-cache docker
 
 # Expose port
-EXPOSE 3000
+EXPOSE 4321
 
 # Set environment variables
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV PORT=4321
 ENV DB_LOCATION=/data/db
 ENV STACKS_DIR=/data/stacks
 

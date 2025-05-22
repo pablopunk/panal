@@ -4,16 +4,14 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "concurrently \"pnpm:astro\" \"pnpm:ws-server\"",
-		"start": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview",
-		"astro": "astro dev",
-		"ws-server": "bun --watch server.ts",
+		"dev": "astro dev",
 		"lint:fix": "biome check --write src",
 		"lint": "biome check src"
 	},
 	"dependencies": {
+		"@astrojs/node": "^9.2.2",
 		"@astrojs/react": "^4.2.7",
 		"@astrojs/tailwind": "latest",
 		"@hookform/resolvers": "^3.9.1",
@@ -82,7 +80,6 @@
 		"@types/react": "^19.1.4",
 		"@types/react-dom": "^19.1.5",
 		"@types/ws": "^8.18.1",
-		"concurrently": "^9.1.2",
 		"nodemon": "^3.1.10",
 		"postcss": "^8",
 		"tailwindcss": "^3.4.17",

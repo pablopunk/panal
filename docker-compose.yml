@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   panal:
     build: .
     container_name: panal
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "4321:4321"
     volumes:
       - ./data/db:/data/db
       - ./data/stacks:/data/stacks

@@ -14,15 +14,6 @@ export interface Stack {
 	managedBy: "panal" | "external";
 }
 
-async function isSwarmActive(): Promise<boolean> {
-	try {
-		const info = await docker.info();
-		return info?.Swarm?.LocalNodeState === "active";
-	} catch {
-		return false;
-	}
-}
-
 // Helper: get all Panal-managed stack names from STACKS_LOCATION
 async function getPanalManagedStacks(): Promise<string[]> {
 	try {
@@ -143,4 +134,13 @@ export async function getStacks(): Promise<Stack[]> {
 export async function getStackById(id: string): Promise<Stack | undefined> {
 	const stacks = await getStacks();
 	return stacks.find((stack) => stack.id === id);
+}
+
+export async function isSwarmActive(): Promise<boolean> {
+	try {
+		const info = await docker.info();
+		return info?.Swarm?.LocalNodeState === "active";
+	} catch {
+		return false;
+	}
 }

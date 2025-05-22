@@ -1,14 +1,100 @@
 ---
+import { Icon } from "astro-icon/components";
 import Layout from "../layouts/Layout.astro";
-import { getStacks } from "../lib/docker/stacks";
+import { getNodes } from "../lib/docker/nodes";
+import { getStacks, isSwarmActive } from "../lib/docker/stacks";
+import Badge from "../react/Badge";
+import Card from "../react/Card";
 import StackList from "../react/StackList";
 
 const stacks = await getStacks();
 const panalStacks = stacks.filter((stack) => stack.managedBy === "panal");
 const externalStacks = stacks.filter((stack) => stack.managedBy === "external");
+const nodes = await getNodes();
+const swarm = await isSwarmActive();
 ---
 
 <Layout title="Stacks">
+  <div class="grid gap-6 mb-10">
+    {
+      nodes.map((node) => (
+        <Card>
+          <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg font-medium">{node.hostname}</h3>
+                <Badge variant={node.status === "ready" ? "success" : "danger"}>
+                  {node.status}
+                </Badge>
+                {node.role === "manager" && (
+                  <Badge variant="info">Manager</Badge>
+                )}
+                {node.leader && <Badge variant="warning">Leader</Badge>}
+              </div>
+              <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {node.id}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <div class="text-sm font-medium">CPU</div>
+                <div class="flex items-center mt-1">
+                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div
+                      class="bg-emerald-600 h-2.5 rounded-full"
+                      style={`width: ${node.cpu.usage}%`}
+                    />
+                  </div>
+                  <span class="ml-2 text-sm">{node.cpu.usage}%</span>
+                </div>
+              </div>
+
+              <div>
+                <div class="text-sm font-medium">Memory</div>
+                <div class="flex items-center mt-1">
+                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div
+                      class="bg-emerald-600 h-2.5 rounded-full"
+                      style={`width: ${node.memory.usage}%`}
+                    />
+                  </div>
+                  <span class="ml-2 text-sm">{node.memory.usage}%</span>
+                </div>
+              </div>
+
+              <div>
+                <div class="text-sm font-medium">Disk</div>
+                <div class="flex items-center mt-1">
+                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div
+                      class="bg-emerald-600 h-2.5 rounded-full"
+                      style={`width: ${node.disk.usage}%`}
+                    />
+                  </div>
+                  <span class="ml-2 text-sm">{node.disk.usage}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {node.services.length > 0 && (
+            <div class="mt-4">
+              <div class="text-sm font-medium mb-2">Services</div>
+              <div class="flex flex-wrap gap-2">
+                {node.services.map((service) => (
+                  <div class="inline-flex items-center px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-sm">
+                    {service}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Card>
+      ))
+    }
+  </div>
+
   <div class="flex justify-between items-center mb-6">
     <a href="/stacks/create">
       <button
