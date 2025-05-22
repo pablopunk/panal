@@ -2,7 +2,7 @@ import Editor, { OnMount } from "@monaco-editor/react";
 import * as yaml from "js-yaml";
 import type * as monacoEditor from "monaco-editor";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Toaster, toast } from "sonner";
+import toast, { Toaster } from "react-hot-toast";
 import StackActionButtons from "./StackActionButtons";
 import StackLogViewer from "./StackLogViewer";
 
@@ -256,7 +256,6 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 
 	return (
 		<div>
-			<Toaster position="top-center" richColors />
 			<div className="flex items-center gap-2 mb-2">
 				<h1 className="text-2xl font-bold">{stack.name}</h1>
 				<span
@@ -286,7 +285,7 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 						stackStatus={stack.status}
 						onAction={handleAction}
 					/>
-					<StackLogViewer stackId={stackId} className="mk-6" />
+					<StackLogViewer stackId={stackId} className="my-3" />
 				</>
 			)}
 			{/* Render services, etc. */}

@@ -2,7 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Loader2, Trash2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Toaster, toast } from "sonner";
+import toast from "react-hot-toast";
 import Badge from "./Badge";
 import Button from "./Button";
 import Card from "./Card";
@@ -33,6 +33,7 @@ export default function StackList() {
 	useEffect(() => {
 		stacksRef.current = stacks;
 	}, [stacks]);
+
 
 	useEffect(() => {
 		const fetchStacks = async () => {
@@ -131,7 +132,6 @@ export default function StackList() {
 
 	return (
 		<>
-			<Toaster position="top-center" richColors />
 			<div className="space-y-8">
 				{panalStacks.length > 0 && (
 					<div>

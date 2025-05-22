@@ -1,11 +1,12 @@
 ---
 import { ClientRouter } from "astro:transitions";
+import toast, { Toaster } from "react-hot-toast";
 import { getCurrentUser } from "../lib/getCurrentUser";
 import Header from "../react/Header";
 import Sidebar from "../react/Sidebar";
 
 interface Props {
-	title: string;
+  title: string;
 }
 
 const { title } = Astro.props;
@@ -26,6 +27,7 @@ const user = getCurrentUser(Astro);
   <body
     class="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50"
   >
+    <Toaster client:only="react" gutter={16} position="top-right" />
     <div class="flex h-screen overflow-hidden">
       <Sidebar client:only="react" />
       <div class="flex flex-col flex-1 overflow-hidden">
