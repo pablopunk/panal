@@ -2,8 +2,8 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { DB_LOCATION } from "./config";
 
-const DB_LOCATION = process.env.DB_LOCATION || "./data";
 const DB_FILE = path.join(DB_LOCATION, "db.json");
 
 export interface User {

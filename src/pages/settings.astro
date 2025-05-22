@@ -1,5 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { DB_LOCATION, STACKS_DIR } from "../lib/config";
 import AppSettingsForm from "../react/AppSettingsForm";
 import Button from "../react/Button";
 import Card from "../react/Card";
@@ -27,13 +28,15 @@ import UserSettingsForm from "../react/UserSettingsForm";
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <div class="font-medium mb-2 text-sm pt-2">DB_LOCATION</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">/data/db</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              {DB_LOCATION}
+            </div>
           </div>
 
           <div>
             <div class="font-medium mb-2 text-sm pt-2">STACKS_DIR</div>
             <div class="text-sm text-gray-500 dark:text-gray-400">
-              /data/stacks
+              {STACKS_DIR}
             </div>
           </div>
         </div>

@@ -20,6 +20,7 @@ async function getDockerLogs({ lines = 200 }: { lines?: number }) {
 			String(lines),
 			"--no-pager",
 		]);
+
 		let output = "";
 		let errored = false;
 		journal.stdout.on("data", (data) => {
@@ -48,9 +49,6 @@ async function getDockerLogs({ lines = 200 }: { lines?: number }) {
 				})();
 			}
 		});
-	}).catch((err) => {
-		console.error("Error getting docker logs", err);
-		return "";
 	});
 }
 
@@ -62,4 +60,4 @@ export const GET: APIRoute = async ({ request }) => {
 		status: 200,
 		headers: { "Content-Type": "text/plain" },
 	});
-}; 
+};

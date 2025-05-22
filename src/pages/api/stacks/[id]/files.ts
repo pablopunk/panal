@@ -2,9 +2,10 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { APIRoute } from "astro";
+import { STACKS_DIR } from "../../../../lib/config";
 import { runStackDeployOrUpdate } from "../../../../lib/docker/services";
 
-const STACKS_LOCATION = process.env.STACKS_LOCATION || "./stacks";
+const STACKS_LOCATION = STACKS_DIR;
 
 export const GET: APIRoute = async ({ params }) => {
 	const { id } = params;

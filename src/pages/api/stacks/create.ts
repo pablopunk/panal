@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { STACKS_DIR } from "../../../lib/config";
 import { runStackDeployOrUpdate } from "../../../lib/docker/services";
 
 function isValidStackName(name: string) {

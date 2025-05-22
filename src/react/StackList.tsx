@@ -34,7 +34,6 @@ export default function StackList() {
 		stacksRef.current = stacks;
 	}, [stacks]);
 
-
 	useEffect(() => {
 		const fetchStacks = async () => {
 			setLoading(true);
@@ -177,6 +176,7 @@ export default function StackList() {
 													{stack.services !== 1 ? "s" : ""}
 												</span>
 											</div>
+											{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
 											<div
 												className="flex items-center gap-2"
 												onClick={stopPropagation}
@@ -297,6 +297,7 @@ export default function StackList() {
 													{stack.services !== 1 ? "s" : ""}
 												</span>
 											</div>
+											{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
 											<div
 												className="flex items-center gap-2"
 												onClick={stopPropagation}

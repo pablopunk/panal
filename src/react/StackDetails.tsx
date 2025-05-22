@@ -348,12 +348,9 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 			{stack.managedBy === "panal" && (
 				<div className="mt-10">
 					<div className="mb-6">
-						<label
-							id="compose-label"
-							className="block text-sm font-medium mb-1"
-						>
+						<h3 id="compose-label" className="block text-sm font-medium mb-1">
 							docker-compose.yml
-						</label>
+						</h3>
 						<div
 							style={{ height: composeHeight, minHeight: 150, maxHeight: 1000 }}
 							className="relative group border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden bg-white dark:bg-gray-900"
@@ -391,9 +388,9 @@ export default function StackDetails({ stackId }: { stackId: string }) {
 						</div>
 					</div>
 					<div className="mb-6">
-						<label id="env-label" className="block text-sm font-medium mb-1">
+						<h3 id="env-label" className="block text-sm font-medium mb-1">
 							.env file
-						</label>
+						</h3>
 						<div
 							style={{ height: envHeight, minHeight: 50, maxHeight: 500 }}
 							className="relative group border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden bg-white dark:bg-gray-900"

@@ -1,11 +1,6 @@
-import { spawn } from "node:child_process";
-import fs from "node:fs/promises";
-import path from "node:path";
 import type { APIRoute } from "astro";
 import { runStackRemove } from "../../../lib/docker/services";
 import { getStackById } from "../../../lib/docker/stacks";
-
-const STACKS_LOCATION = process.env.STACKS_LOCATION || "./stacks";
 
 export const GET: APIRoute = async ({ params }) => {
 	try {

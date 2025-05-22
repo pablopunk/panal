@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import Docker from "dockerode";
+import { STACKS_DIR } from "../config";
 
 const docker = new Docker();
 
@@ -171,7 +172,7 @@ export async function getServiceById(id: string): Promise<Service | undefined> {
 	return all.find((svc) => svc.id === id);
 }
 
-const STACKS_LOCATION = process.env.STACKS_LOCATION || "./stacks";
+const STACKS_LOCATION = STACKS_DIR;
 
 export async function runStackDeployOrUpdate({
 	id,
@@ -271,4 +272,4 @@ export async function runStackAction({
 		return await runStackRemove({ id });
 	}
 	return { success: false, message: "Invalid action" };
-}	
+}

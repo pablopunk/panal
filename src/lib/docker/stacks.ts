@@ -1,9 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import Docker from "dockerode";
+import { STACKS_DIR } from "../config";
 
 const docker = new Docker();
-const STACKS_LOCATION = process.env.STACKS_LOCATION || "./stacks";
+const STACKS_LOCATION = STACKS_DIR;
 
 export interface Stack {
 	id: string;
