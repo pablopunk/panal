@@ -1,5 +1,8 @@
 import { navigate } from "astro:transitions/client";
 import Editor, { OnMount } from "@monaco-editor/react";
+// @ts-expect-error: composerize has no types
+import * as composerize from "composerize";
+const convertDockerRunToCompose = composerize.default;
 import * as yaml from "js-yaml";
 import type * as monacoEditor from "monaco-editor";
 import { useEffect, useRef, useState } from "react";
@@ -17,7 +20,7 @@ function getInitialTheme() {
 export default function CreateStackForm() {
 	const [name, setName] = useState("");
 	const [compose, setCompose] = useState(
-		'version: "3.8"\nservices:\n  web:\n    image: nginx:alpine\n    ports:\n      - "8080:80"',
+		'services:\n  web:\n    image: nginx:alpine\n    ports:\n      - "8080:80"',
 	);
 	const [env, setEnv] = useState("");
 	const [error, setError] = useState("");
@@ -203,7 +206,10 @@ export default function CreateStackForm() {
 				</div>
 				<div>
 					<div className="flex justify-between items-center mb-2">
-						<label htmlFor="compose-editor" className="text-sm font-medium">
+						<label
+							htmlFor="compose-editor"
+							className="text-sm font-medium font-mono"
+						>
 							docker-compose.yml
 						</label>
 						{yamlError && (
@@ -211,6 +217,13 @@ export default function CreateStackForm() {
 								YAML Error
 							</span>
 						)}
+						<span className="text-xs text-gray-500">
+							or try pasting a{" "}
+							<code className="font-mono text-gray-600 dark:text-gray-400">
+								docker run
+							</code>{" "}
+							command
+						</span>
 					</div>
 					<div
 						ref={composeRef}
@@ -223,8 +236,25 @@ export default function CreateStackForm() {
 							defaultLanguage="yaml"
 							value={compose}
 							onChange={(v) => {
-								setCompose(v || "");
-								validateYaml(v || "");
+								const value = v || "";
+								if (value.trim().startsWith("docker run")) {
+									let yamlStr = convertDockerRunToCompose(value.trim());
+									const lines = yamlStr.split("\n");
+									if (lines[0].trim().startsWith("name:")) {
+										yamlStr = lines.slice(1).join("\n");
+									}
+									if (composeEditorRef.current) {
+										composeEditorRef.current.setValue(yamlStr);
+									}
+									setCompose(yamlStr);
+									validateYaml(yamlStr);
+									toast.success(
+										"Converted docker run command to Compose YAML!",
+									);
+									return;
+								}
+								setCompose(value);
+								validateYaml(value);
 							}}
 							onMount={(editor, monaco) => {
 								composeEditorRef.current = editor;
@@ -249,7 +279,10 @@ export default function CreateStackForm() {
 				</div>
 				<div>
 					<div className="flex justify-between items-center mb-2">
-						<label htmlFor="env-editor" className="text-sm font-medium">
+						<label
+							htmlFor="env-editor"
+							className="text-sm font-medium font-mono"
+						>
 							.env file
 						</label>
 					</div>
