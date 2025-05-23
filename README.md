@@ -11,7 +11,7 @@
 export STACKS=./stacks
 export DATABASE=./db
 export PORT=4321
-docker run -d --name panal -p $PORT:4321 -v $DATABASE:/data/db -v $STACKS:/data/stacks -v /var/run/docker.sock:/var/run/docker.sock pablopunk/panal:latest
+docker run -d --name panal -p $PORT:4321 -v $DATABASE:/data/db -v $STACKS:/data/stacks -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/pablopunk/panal:latest
 ````
 
 ## Docker Compose
@@ -19,7 +19,7 @@ docker run -d --name panal -p $PORT:4321 -v $DATABASE:/data/db -v $STACKS:/data/
 ````yaml
 services:
   panal:
-    image: pablopunk/panal:latest
+    image: ghcr.io/pablopunk/panal:latest
     container_name: panal
     restart: unless-stopped
     ports:
