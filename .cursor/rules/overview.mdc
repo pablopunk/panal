@@ -1,0 +1,130 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Panal: Modern Docker & Swarm Management UI
+
+**Panal** is a minimalist, modern web application for managing Docker and Docker Swarm environments. Built with Astro, React, and TypeScript, it provides a clean, accessible interface with automatic dark/light mode support and real-time Docker state monitoring.
+
+## Current Architecture & Technology Stack
+
+- **Frontend**: Astro with React components, TypeScript
+- **UI Components**: Radix UI primitives, Tailwind CSS, Lucide icons
+- **Code Editing**: Monaco Editor for YAML/env file editing
+- **Backend**: Astro API routes with Dockerode for Docker integration
+- **Database**: Simple JSON file (location configurable via `DB_LOCATION` env var)
+- **Deployment**: Docker container 
+
+## Current Features & Pages
+
+### Authentication & Setup Flow
+- **Setup Page** (`/setup`): First-time setup requiring admin user creation (username/password)
+- **Login Page** (`/login`): Standard authentication for returning users
+- **Middleware**: Automatic redirection based on setup/auth state
+
+### Main Application Pages
+
+#### 1. Home/Stacks Page (`/`)
+- **Node Overview**: Shows Docker Swarm nodes with CPU, memory, disk usage and running services (when Swarm is active)
+- **Stack Management**: 
+  - Lists **Panal-managed stacks** (from `STACKS_DIR` with docker-compose.yml files)
+  - Lists **External stacks** (detected from running Docker containers/stacks, read-only)
+  - Each stack shows: name, status (running/partial/stopped), type (swarm/standalone), service count
+  - **Create Stack** button opens a dialog with Monaco editors for compose.yml and .env
+  - Empty state message when no Panal-managed stacks exist
+- **Real-time Updates**: Polls every 2 seconds for stack status changes
+
+#### 2. Stack Details Page (`/stacks/[id]`)
+- **Stack Header**: Name, status badge, type badge, management indicator (Panal/External)
+- **Action Buttons**: Start/stop/restart (for Panal-managed stacks only)
+- **Live Deployment Logs**: Real-time logs from stack deployment
+- **Services Section**: 
+  - Lists all services with status, replica count, and exposed ports
+  - Clickable ports open in browser using configured hostname
+- **Edit Section** (Panal-managed only):
+  - Monaco editors for docker-compose.yml and .env files
+  - YAML validation with error highlighting
+  - Resizable editor panels
+  - Save & Redeploy functionality
+
+#### 3. Settings Page (`/settings`)
+- **User Settings**: Change username/password
+- **App Settings**: Configure hostname for port links
+- **Environment Variables**: Display current `DB_LOCATION` and `STACKS_DIR` (read-only)
+
+#### 4. Terminal & Docker Logs Page (`/terminal`)
+- **Host Terminal**: Interactive terminal access to the container environment
+- **Docker Daemon Logs**: Live logs from Docker service via API
+- Split-panel layout with refresh functionality
+
+#### 5. Create Stack Page (`/stacks/create`)
+- Standalone page with Monaco editors for creating new stacks
+- YAML validation and docker run command conversion support
+
+### API Architecture
+
+#### Stack Management (`/api/stacks/`)
+- `GET /api/stacks` - List all stacks (Panal + external)
+- `POST /api/stacks/create` - Create new stack
+- `GET /api/stacks/[id]` - Get stack details
+- `DELETE /api/stacks/[id]` - Remove stack
+- `POST /api/stacks/[id]/action` - Start/stop/restart stack
+- `GET /api/stacks/[id]/files` - Get compose/env files
+- `PUT /api/stacks/[id]/files` - Update compose/env files
+- `GET /api/stacks/[id]/log` - Get deployment logs
+
+#### Other APIs
+- `/api/auth/*` - Authentication (login, logout, setup, user management)
+- `/api/services` - List services for a stack
+- `/api/nodes` - Docker Swarm node information
+- `/api/settings` - App configuration
+- `/api/docker-logs` - Docker daemon logs
+
+## Docker Integration
+
+### Stack Detection & Management
+- **Swarm Mode**: Uses `docker stack ls` to detect running stacks
+- **Standalone Mode**: Uses container labels (`com.docker.compose.project`) to group containers into stacks
+- **Panal-Managed**: Stacks with corresponding directories in `STACKS_DIR`
+- **External**: Running stacks/projects not managed by Panal (read-only)
+
+### Environment Variables
+- `DB_LOCATION`: SQLite database path (default: `/data/db`)
+- `STACKS_DIR`: Directory for Panal-managed stacks (default: `/data/stacks`)
+- `HOST`: Server host (default: `0.0.0.0`)
+- `PORT`: Server port (default: `4321`)
+
+## UI/UX Principles
+
+### Design System
+- **Minimalist & Clean**: Focus on essential information, minimal visual clutter
+- **Automatic Dark/Light Mode**: Follows system preference
+- **Accessible**: Proper ARIA labels, keyboard navigation, semantic HTML
+- **Responsive**: Works on desktop and mobile devices
+
+### Real-Time Features
+- **Live Updates**: All pages poll for changes and update without refresh
+- **Live Logs**: WebSocket-like streaming for deployment and Docker logs
+- **Status Indicators**: Color-coded badges for stack/service status
+
+### User Experience
+- **Progressive Enhancement**: Works without JavaScript for basic functionality
+- **Error Handling**: Toast notifications for user feedback
+- **Loading States**: Proper loading indicators and skeleton states
+- **Keyboard Shortcuts**: Full keyboard navigation support
+
+## Current Limitations & Future Considerations
+
+### Not Yet Implemented
+- Service detail pages with container management
+- Container-level terminal access
+- Cluster/node management interface
+- Advanced Docker Swarm features (secrets, configs, etc.)
+- Multi-user support beyond single admin
+
+### Architecture Notes
+- Built as a single Docker container for easy deployment
+- Requires Docker socket access for container management
+- SQLite for simplicity (single-file database)
+- Stateless design with real-time polling for updates
