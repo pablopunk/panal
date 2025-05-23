@@ -1,5 +1,5 @@
 
-# Panal
+# Panal 🍯
 
 > [!WARNING]  
 > This app is on early Alpha and should not be used in production yet.
