@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import Badge from "./Badge";
 import Button from "./Button";
 import Card from "./Card";
+import CreateStackForm from "./CreateStackForm";
 import StackActionButtons from "./StackActionButtons";
 
 interface Stack {
@@ -132,127 +133,144 @@ export default function StackList() {
 	return (
 		<>
 			<div className="space-y-8">
-				{panalStacks.length > 0 && (
-					<div>
-						<h2 className="text-lg font-semibold mb-2">Stacks</h2>
-						<div className="space-y-2">
-							{panalStacks.map((stack) => (
-								<RowButton
-									key={stack.id}
-									onClick={() => handleRowClick(stack.id)}
-									onKeyDown={(e) => handleRowKeyDown(e, stack.id)}
-									aria-label={`View stack ${stack.name}`}
-								>
-									<Card className="p-0 cursor-pointer hover:border-emerald-500 transition-colors">
-										<div className="flex items-center justify-between px-4 py-3">
-											<div className="flex flex-col gap-1">
-												<div className="flex items-center gap-2">
-													<span className="font-medium text-base">
-														{stack.name}
-													</span>
-													<Badge
-														variant={
-															stack.status === "running"
-																? "success"
-																: stack.status === "partial"
-																	? "warning"
-																	: "danger"
-														}
-													>
-														{stack.status}
-													</Badge>
-													<Badge
-														variant={
-															stack.type === "swarm" ? "info" : "default"
-														}
-													>
-														{stack.type.charAt(0).toUpperCase() +
-															stack.type.slice(1)}
-													</Badge>
-													<Badge variant="warning">Panal</Badge>
-												</div>
-												<span className="text-xs text-gray-500 dark:text-gray-400">
-													{stack.services} service
-													{stack.services !== 1 ? "s" : ""}
+				<div>
+					<div className="flex items-center justify-between mb-2">
+						<h2 className="text-lg font-semibold">Stacks</h2>
+						<Dialog.Root>
+							<Dialog.Trigger asChild>
+								<Button variant="primary" size="sm" aria-label="Create Stack">
+									+ Create Stack
+								</Button>
+							</Dialog.Trigger>
+							<Dialog.Portal>
+								<Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
+								<Dialog.Content className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 w-full max-w-2xl border border-gray-200 dark:border-gray-800">
+									<Dialog.Title className="text-lg font-semibold mb-2">
+										Create Stack
+									</Dialog.Title>
+									<CreateStackForm />
+								</Dialog.Content>
+							</Dialog.Portal>
+						</Dialog.Root>
+					</div>
+					<div className="space-y-2">
+						{panalStacks.length === 0 && (
+							<div className="text-gray-500 dark:text-gray-400">
+								No stacks found. Create one from Panal or manually in the stacks
+								directory.
+							</div>
+						)}
+						{panalStacks.map((stack) => (
+							<RowButton
+								key={stack.id}
+								onClick={() => handleRowClick(stack.id)}
+								onKeyDown={(e) => handleRowKeyDown(e, stack.id)}
+								aria-label={`View stack ${stack.name}`}
+							>
+								<Card className="p-0 cursor-pointer hover:border-emerald-500 transition-colors">
+									<div className="flex items-center justify-between px-4 py-3">
+										<div className="flex flex-col gap-1">
+											<div className="flex items-center gap-2">
+												<span className="font-medium text-base">
+													{stack.name}
 												</span>
-											</div>
-											{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-											<div
-												className="flex items-center gap-2"
-												onClick={stopPropagation}
-											>
-												<StackActionButtons
-													stackId={stack.id}
-													stackStatus={stack.status}
-												/>
-												<Dialog.Root
-													open={removingStack?.id === stack.id}
-													onOpenChange={(open) =>
-														open
-															? setRemovingStack(stack)
-															: setRemovingStack(null)
+												<Badge
+													variant={
+														stack.status === "running"
+															? "success"
+															: stack.status === "partial"
+																? "warning"
+																: "danger"
 													}
 												>
-													<Dialog.Trigger asChild>
-														<Button
-															variant="danger"
-															size="sm"
-															aria-label="Remove"
-															onClick={(e) => {
-																stopPropagation(e);
-																setRemovingStack(stack);
-															}}
-														>
-															<Trash2 className="w-4 h-4" />
-														</Button>
-													</Dialog.Trigger>
-													<Dialog.Portal>
-														<Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
-														<Dialog.Content className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 w-full max-w-md border border-gray-200 dark:border-gray-800">
-															<Dialog.Title className="text-lg font-semibold mb-2">
-																Remove Stack
-															</Dialog.Title>
-															<Dialog.Description className="mb-4 text-gray-600 dark:text-gray-300">
-																Are you sure you want to remove{" "}
-																<span className="font-semibold">
-																	{stack.name}
-																</span>
-																? This will stop the stack and delete its files.
-																This action cannot be undone.
-															</Dialog.Description>
-															<div className="flex justify-end gap-2 mt-6">
-																<Dialog.Close asChild>
-																	<Button
-																		variant="secondary"
-																		disabled={removing}
-																	>
-																		Cancel
-																	</Button>
-																</Dialog.Close>
-																<Button
-																	variant="danger"
-																	disabled={removing}
-																	onClick={handleRemove}
-																>
-																	{removing ? (
-																		<Loader2 className="animate-spin w-4 h-4 mr-2" />
-																	) : (
-																		<Trash2 className="w-4 h-4 mr-2" />
-																	)}
-																	Remove
-																</Button>
-															</div>
-														</Dialog.Content>
-													</Dialog.Portal>
-												</Dialog.Root>
+													{stack.status}
+												</Badge>
+												<Badge
+													variant={stack.type === "swarm" ? "info" : "default"}
+												>
+													{stack.type.charAt(0).toUpperCase() +
+														stack.type.slice(1)}
+												</Badge>
+												<Badge variant="warning">Panal</Badge>
 											</div>
+											<span className="text-xs text-gray-500 dark:text-gray-400">
+												{stack.services} service
+												{stack.services !== 1 ? "s" : ""}
+											</span>
 										</div>
-									</Card>
-								</RowButton>
-							))}
-						</div>
+										{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+										<div
+											className="flex items-center gap-2"
+											onClick={stopPropagation}
+										>
+											<StackActionButtons
+												stackId={stack.id}
+												stackStatus={stack.status}
+											/>
+											<Dialog.Root
+												open={removingStack?.id === stack.id}
+												onOpenChange={(open) =>
+													open
+														? setRemovingStack(stack)
+														: setRemovingStack(null)
+												}
+											>
+												<Dialog.Trigger asChild>
+													<Button
+														variant="danger"
+														size="sm"
+														aria-label="Remove"
+														onClick={(e) => {
+															stopPropagation(e);
+															setRemovingStack(stack);
+														}}
+													>
+														<Trash2 className="w-4 h-4" />
+													</Button>
+												</Dialog.Trigger>
+												<Dialog.Portal>
+													<Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
+													<Dialog.Content className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 w-full max-w-md border border-gray-200 dark:border-gray-800">
+														<Dialog.Title className="text-lg font-semibold mb-2">
+															Remove Stack
+														</Dialog.Title>
+														<Dialog.Description className="mb-4 text-gray-600 dark:text-gray-300">
+															Are you sure you want to remove{" "}
+															<span className="font-semibold">
+																{stack.name}
+															</span>
+															? This will stop the stack and delete its files.
+															This action cannot be undone.
+														</Dialog.Description>
+														<div className="flex justify-end gap-2 mt-6">
+															<Dialog.Close asChild>
+																<Button variant="secondary" disabled={removing}>
+																	Cancel
+																</Button>
+															</Dialog.Close>
+															<Button
+																variant="danger"
+																disabled={removing}
+																onClick={handleRemove}
+															>
+																{removing ? (
+																	<Loader2 className="animate-spin w-4 h-4 mr-2" />
+																) : (
+																	<Trash2 className="w-4 h-4 mr-2" />
+																)}
+																Remove
+															</Button>
+														</div>
+													</Dialog.Content>
+												</Dialog.Portal>
+											</Dialog.Root>
+										</div>
+									</div>
+								</Card>
+							</RowButton>
+						))}
 					</div>
-				)}
+				</div>
 				{externalStacks.length > 0 && (
 					<div>
 						<h2 className="text-lg font-semibold mb-2">External Stacks</h2>
