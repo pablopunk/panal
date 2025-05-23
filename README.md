@@ -24,7 +24,7 @@ docker run -d --name panal -p $PORT:4321 -v $DATABASE:/data/db -v $STACKS:/data/
 
 ## Docker Compose
 
-````yaml
+```yaml
 services:
   panal:
     image: ghcr.io/pablopunk/panal:latest
