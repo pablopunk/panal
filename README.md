@@ -1,5 +1,8 @@
 
-# Panal
+# Panal 🍯
+
+> [!WARNING]  
+> This app is on early Alpha and should not be used in production yet.
 
 <p align="center">
 <img src="https://github.com/user-attachments/assets/51dc7c03-43a4-4c7c-9257-e7d216ac9b8f" width="33%" />
