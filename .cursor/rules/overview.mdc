@@ -126,5 +126,4 @@ alwaysApply: true
 ### Architecture Notes
 - Built as a single Docker container for easy deployment
 - Requires Docker socket access for container management
-- SQLite for simplicity (single-file database)
 - Stateless design with real-time polling for updates
