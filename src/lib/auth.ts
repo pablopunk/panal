@@ -1,12 +1,30 @@
 // Authentication utilities
 
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 import type { APIRoute } from "astro";
 import { nanoid } from "nanoid";
+import { DB_LOCATION } from "./config";
 import { type User, addUser, getUsers } from "./db";
 
-// In-memory session store (for simplicity; can be persisted if needed)
-const sessions = new Map<string, string>(); // sessionId -> username
+const SESSIONS_FILE = path.join(DB_LOCATION, "sessions.json");
+
+// Helper to load sessions from file
+async function loadSessions(): Promise<Record<string, string>> {
+	try {
+		const data = await fs.readFile(SESSIONS_FILE, "utf-8");
+		return JSON.parse(data);
+	} catch {
+		return {};
+	}
+}
+
+// Helper to save sessions to file
+async function saveSessions(sessions: Record<string, string>) {
+	await fs.mkdir(DB_LOCATION, { recursive: true });
+	await fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), "utf-8");
+}
 
 export function hashPassword(password: string): string {
 	return crypto.createHash("sha256").update(password).digest("hex");
@@ -22,18 +40,25 @@ export async function verifyPassword(
 	return user.passwordHash === hashPassword(password);
 }
 
-export function createSession(username: string): string {
+export async function createSession(username: string): Promise<string> {
 	const sessionId = nanoid(32);
-	sessions.set(sessionId, username);
+	const sessions = await loadSessions();
+	sessions[sessionId] = username;
+	await saveSessions(sessions);
 	return sessionId;
 }
 
-export function getSession(sessionId: string): string | undefined {
-	return sessions.get(sessionId);
+export async function getSession(
+	sessionId: string,
+): Promise<string | undefined> {
+	const sessions = await loadSessions();
+	return sessions[sessionId];
 }
 
-export function destroySession(sessionId: string) {
-	sessions.delete(sessionId);
+export async function destroySession(sessionId: string) {
+	const sessions = await loadSessions();
+	delete sessions[sessionId];
+	await saveSessions(sessions);
 }
 
 export function getSessionIdFromCookie(
@@ -49,7 +74,7 @@ export async function isAuthenticated(
 ): Promise<boolean> {
 	const sessionId = getSessionIdFromCookie(cookieHeader);
 	if (!sessionId) return false;
-	const username = getSession(sessionId);
+	const username = await getSession(sessionId);
 	if (!username) return false;
 	const users = await getUsers();
 	return users.some((u: User) => u.username === username);

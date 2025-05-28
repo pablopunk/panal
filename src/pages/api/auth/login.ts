@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
 		}
 
 		// Create session and set cookie
-		const sessionId = createSession(username);
+		const sessionId = await createSession(username);
 		return new Response(
 			JSON.stringify({ success: true, message: "Login successful" }),
 			{

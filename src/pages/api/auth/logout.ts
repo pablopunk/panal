@@ -7,7 +7,7 @@ export const POST: APIRoute = async ({ request }) => {
 	try {
 		const cookie = request.headers.get("cookie") || undefined;
 		const sessionId = getSessionIdFromCookie(cookie);
-		if (sessionId) destroySession(sessionId);
+		if (sessionId) await destroySession(sessionId);
 		return new Response(
 			JSON.stringify({ success: true, message: "Logged out" }),
 			{
