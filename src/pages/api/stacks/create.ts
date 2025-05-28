@@ -1,12 +1,14 @@
 import type { APIRoute } from "astro";
 import { STACKS_DIR } from "../../../lib/config";
 import { runStackDeployOrUpdate } from "../../../lib/docker/services";
+import { logger } from "../../../lib/logger";
 
 function isValidStackName(name: string) {
 	return /^[a-zA-Z0-9_-]+$/.test(name);
 }
 
 export const POST: APIRoute = async ({ request }) => {
+	logger.info("POST /api/stacks/create called");
 	try {
 		const { name, compose, env } = await request.json();
 		if (!name || !compose) {
@@ -45,10 +47,8 @@ export const POST: APIRoute = async ({ request }) => {
 			JSON.stringify({ success: false, message: result.message }),
 			{ status: 500, headers: { "Content-Type": "application/json" } },
 		);
-	} catch (error) {
-		return new Response(
-			JSON.stringify({ success: false, message: "Failed to create stack." }),
-			{ status: 500, headers: { "Content-Type": "application/json" } },
-		);
+	} catch (err) {
+		logger.error("Failed to create stack", err);
+		return new Response("Failed to create stack", { status: 500 });
 	}
 };

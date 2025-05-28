@@ -59,6 +59,7 @@
 		"lucide-react": "^0.454.0",
 		"monaco-editor": "^0.52.2",
 		"nanoid": "^5.1.5",
+		"pino": "^9.7.0",
 		"react": "^19.1.0",
 		"react-day-picker": "8.10.1",
 		"react-dom": "^19.1.0",

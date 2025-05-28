@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
 import type { APIRoute } from "astro";
+import { logger } from "../../lib/logger";
 
 // Common Docker daemon log locations
 const LOG_PATHS = [
@@ -53,11 +54,17 @@ async function getDockerLogs({ lines = 200 }: { lines?: number }) {
 }
 
 export const GET: APIRoute = async ({ request }) => {
+	logger.info("GET /api/docker-logs called");
 	const url = new URL(request.url);
 	const lines = Number(url.searchParams.get("lines")) || 200;
-	const logs = await getDockerLogs({ lines });
-	return new Response(logs, {
-		status: 200,
-		headers: { "Content-Type": "text/plain" },
-	});
+	try {
+		const logs = await getDockerLogs({ lines });
+		return new Response(logs, {
+			status: 200,
+			headers: { "Content-Type": "text/plain" },
+		});
+	} catch (err) {
+		logger.error("Failed to get docker logs", err);
+		return new Response("Failed to get logs", { status: 500 });
+	}
 };

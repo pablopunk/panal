@@ -1,7 +1,9 @@
 import type { APIRoute } from "astro";
 import { createSession, verifyPassword } from "../../../lib/auth";
+import { logger } from "../../../lib/logger";
 
 export const POST: APIRoute = async ({ request }) => {
+	logger.info("POST /api/auth/login called");
 	try {
 		const data = await request.json();
 		const { username, password } = data;
@@ -46,13 +48,8 @@ export const POST: APIRoute = async ({ request }) => {
 				},
 			},
 		);
-	} catch (error) {
-		return new Response(
-			JSON.stringify({ success: false, message: "Server error" }),
-			{
-				status: 500,
-				headers: { "Content-Type": "application/json" },
-			},
-		);
+	} catch (err) {
+		logger.error("Failed to login", err);
+		return new Response("Failed to login", { status: 500 });
 	}
 };

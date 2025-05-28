@@ -4,10 +4,12 @@ import path from "node:path";
 import type { APIRoute } from "astro";
 import { STACKS_DIR } from "../../../../lib/config";
 import { runStackDeployOrUpdate } from "../../../../lib/docker/services";
+import { logger } from "../../../../lib/logger";
 
 const STACKS_LOCATION = STACKS_DIR;
 
 export const GET: APIRoute = async ({ params }) => {
+	logger.info("GET /api/stacks/[id]/files called", params.id);
 	const { id } = params;
 	if (!id || typeof id !== "string") {
 		return new Response(
@@ -28,6 +30,7 @@ export const GET: APIRoute = async ({ params }) => {
 			{ status: 200, headers: { "Content-Type": "application/json" } },
 		);
 	} catch (err) {
+		logger.error("Failed to get stack files", err);
 		return new Response(
 			JSON.stringify({ success: false, message: String(err) }),
 			{ status: 500, headers: { "Content-Type": "application/json" } },
@@ -36,6 +39,7 @@ export const GET: APIRoute = async ({ params }) => {
 };
 
 export const PUT: APIRoute = async ({ params, request }) => {
+	logger.info("PUT /api/stacks/[id]/files called", params.id);
 	const { id } = params;
 	if (!id || typeof id !== "string") {
 		return new Response(

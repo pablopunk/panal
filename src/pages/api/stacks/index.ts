@@ -1,7 +1,9 @@
 import type { APIRoute } from "astro";
 import { getStacks } from "../../../lib/docker/stacks";
+import { logger } from "../../../lib/logger";
 
 export const GET: APIRoute = async () => {
+	logger.info("GET /api/stacks called");
 	try {
 		const stacks = await getStacks();
 
@@ -10,6 +12,7 @@ export const GET: APIRoute = async () => {
 			headers: { "Content-Type": "application/json" },
 		});
 	} catch (error) {
+		logger.error("Failed to get stacks", error);
 		return new Response(
 			JSON.stringify({ success: false, message: "Failed to fetch stacks" }),
 			{

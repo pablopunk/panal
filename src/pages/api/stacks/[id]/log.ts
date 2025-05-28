@@ -2,10 +2,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { APIRoute } from "astro";
 import { STACKS_DIR } from "../../../../lib/config";
+import { logger } from "../../../../lib/logger";
 
 const STACKS_LOCATION = STACKS_DIR;
 
 export const GET: APIRoute = async ({ params, request }) => {
+	logger.info("GET /api/stacks/[id]/log called", params.id);
 	const { id } = params;
 	if (!id || typeof id !== "string") {
 		return new Response(
@@ -52,13 +54,8 @@ export const GET: APIRoute = async ({ params, request }) => {
 				headers: { "Content-Type": "application/json" },
 			},
 		);
-	} catch {
-		return new Response(
-			JSON.stringify({ success: false, log: "", offset: 0 }),
-			{
-				status: 404,
-				headers: { "Content-Type": "application/json" },
-			},
-		);
+	} catch (err) {
+		logger.error("Failed to get stack log", err);
+		return new Response("Failed to get stack log", { status: 500 });
 	}
 };
