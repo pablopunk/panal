@@ -3,19 +3,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import Docker from "dockerode";
 import { STACKS_DIR } from "../config";
-// Determine whether to use the Docker CLI plugin or the standalone binary for Compose
-type ComposeCommand = { program: string; args: string[] };
-let composeCommandCache: ComposeCommand | null = null;
-function getComposeCommand(): ComposeCommand {
-  if (composeCommandCache) return composeCommandCache;
-  try {
-    execSync("docker compose version", { stdio: "ignore" });
-    composeCommandCache = { program: "docker", args: ["compose"] };
-  } catch {
-    composeCommandCache = { program: "docker-compose", args: [] };
-  }
-  return composeCommandCache;
-}
 
 const docker = new Docker();
 
@@ -206,22 +193,14 @@ export async function runStackDeployOrUpdate({
     await fs.writeFile(path.join(stackDir, ".env"), env || "");
     const logPath = path.join(stackDir, "deploy.log");
     const swarm = await isSwarmActive();
-    const cmd = "docker";
-    let deployCmd: string[];
-    if (swarm) {
-      deployCmd = ["stack", "deploy", "-c", "docker-compose.yml", stackName];
-    } else {
-      deployCmd = ["compose", "down"];
-    }
     const logStream = await fs.open(logPath, "w");
     let proc: ReturnType<typeof spawn>;
     if (swarm) {
-      proc = spawn(cmd, deployCmd, { cwd: stackDir });
+      proc = spawn("docker", ["stack", "deploy", "-c", "docker-compose.yml", stackName], { cwd: stackDir });
     } else {
-      const { program, args } = getComposeCommand();
-      const invocation = [program, ...args].join(" ");
-      proc = spawn("sh", ["-c", `${invocation} down && ${invocation} up -d`], {
-        cwd: stackDir,
+      proc = spawn("docker-compose", ["down"], { cwd: stackDir });
+      proc.on("close", () => {
+        spawn("docker-compose", ["up", "-d"], { cwd: stackDir });
       });
     }
     if (proc.stdout) {
@@ -247,13 +226,10 @@ export async function runStackRemove({
   const stackDir = path.join(STACKS_LOCATION, id);
   try {
     // Stop the stack (ignore errors)
-    {
-      const { program, args } = getComposeCommand();
-      await new Promise((resolve) => {
-        const proc = spawn(program, [...args, "down"], { cwd: stackDir });
-        proc.on("close", () => resolve(undefined));
-      });
-    }
+    await new Promise((resolve) => {
+      const proc = spawn("docker-compose", ["down"], { cwd: stackDir });
+      proc.on("close", () => resolve(undefined));
+    });
     // Remove the stack directory
     await fs.rm(stackDir, { recursive: true, force: true });
     return { success: true };

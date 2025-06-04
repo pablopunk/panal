@@ -20,6 +20,9 @@ RUN pnpm run build
 # Install Docker CLI
 RUN apk add --no-cache docker
 
+# Install Docker Compose
+RUN apk add --no-cache docker-compose
+
 # Expose port
 EXPOSE 4321
 
