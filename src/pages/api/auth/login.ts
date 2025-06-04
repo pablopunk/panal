@@ -42,13 +42,18 @@ export const POST: APIRoute = async ({ request }) => {
 		// Create session and set cookie
 		const sessionId = await createSession(username);
 		logger.info("Login successful", { username, sessionId });
+		// Set Secure flag only if HTTPS
+		const isHttps =
+			request.headers.get("x-forwarded-proto") === "https" ||
+			request.url.startsWith("https://");
+		const secureFlag = isHttps ? " Secure;" : "";
 		return new Response(
 			JSON.stringify({ success: true, message: "Login successful" }),
 			{
 				status: 200,
 				headers: {
 					"Content-Type": "application/json",
-					"Set-Cookie": `panal_session=${sessionId}; HttpOnly; Path=/; SameSite=Strict; Secure`,
+					"Set-Cookie": `panal_session=${sessionId}; HttpOnly; Path=/; SameSite=Strict;${secureFlag}`,
 				},
 			},
 		);
