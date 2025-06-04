@@ -6,9 +6,11 @@ export const POST: APIRoute = async ({ request }) => {
 	logger.info("POST /api/auth/login called");
 	try {
 		const data = await request.json();
+		logger.debug("Login request body", data);
 		const { username, password } = data;
 
 		if (!username || !password) {
+			logger.warn("Login failed: missing username or password");
 			return new Response(
 				JSON.stringify({
 					success: false,
@@ -24,6 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
 		const isValid = await verifyPassword(username, password);
 
 		if (!isValid) {
+			logger.warn("Login failed: invalid credentials", { username });
 			return new Response(
 				JSON.stringify({
 					success: false,
@@ -38,6 +41,7 @@ export const POST: APIRoute = async ({ request }) => {
 
 		// Create session and set cookie
 		const sessionId = await createSession(username);
+		logger.info("Login successful", { username, sessionId });
 		return new Response(
 			JSON.stringify({ success: true, message: "Login successful" }),
 			{

@@ -7,6 +7,7 @@ import type { APIRoute } from "astro";
 import { nanoid } from "nanoid";
 import { DB_LOCATION } from "./config";
 import { type User, addUser, getUsers } from "./db";
+import { logger } from "./logger";
 
 const SESSIONS_FILE = path.join(DB_LOCATION, "sessions.json");
 
@@ -14,8 +15,10 @@ const SESSIONS_FILE = path.join(DB_LOCATION, "sessions.json");
 async function loadSessions(): Promise<Record<string, string>> {
 	try {
 		const data = await fs.readFile(SESSIONS_FILE, "utf-8");
+		logger.debug("Loaded sessions from file");
 		return JSON.parse(data);
-	} catch {
+	} catch (err) {
+		logger.warn("No sessions file found or failed to load sessions", err);
 		return {};
 	}
 }
@@ -24,6 +27,7 @@ async function loadSessions(): Promise<Record<string, string>> {
 async function saveSessions(sessions: Record<string, string>) {
 	await fs.mkdir(DB_LOCATION, { recursive: true });
 	await fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), "utf-8");
+	logger.debug("Saved sessions to file", Object.keys(sessions));
 }
 
 export function hashPassword(password: string): string {
@@ -45,6 +49,7 @@ export async function createSession(username: string): Promise<string> {
 	const sessions = await loadSessions();
 	sessions[sessionId] = username;
 	await saveSessions(sessions);
+	logger.info("Created session", { sessionId, username });
 	return sessionId;
 }
 
@@ -52,13 +57,16 @@ export async function getSession(
 	sessionId: string,
 ): Promise<string | undefined> {
 	const sessions = await loadSessions();
-	return sessions[sessionId];
+	const username = sessions[sessionId];
+	logger.debug("Get session", { sessionId, username });
+	return username;
 }
 
 export async function destroySession(sessionId: string) {
 	const sessions = await loadSessions();
 	delete sessions[sessionId];
 	await saveSessions(sessions);
+	logger.info("Destroyed session", { sessionId });
 }
 
 export function getSessionIdFromCookie(
@@ -73,11 +81,14 @@ export async function isAuthenticated(
 	cookieHeader: string | undefined,
 ): Promise<boolean> {
 	const sessionId = getSessionIdFromCookie(cookieHeader);
+	logger.debug("Checking authentication", { sessionId });
 	if (!sessionId) return false;
 	const username = await getSession(sessionId);
 	if (!username) return false;
 	const users = await getUsers();
-	return users.some((u: User) => u.username === username);
+	const result = users.some((u: User) => u.username === username);
+	logger.info("Authentication check result", { sessionId, username, result });
+	return result;
 }
 
 // Middleware for API route protection
