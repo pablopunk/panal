@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
     await addUser(user);
 
     // Create session and set cookie
-    const sessionId = createSession(username);
+    const sessionId = await createSession(username);
 
     // Handle swarm setup (still mock for now)
     let swarmMessage = "";

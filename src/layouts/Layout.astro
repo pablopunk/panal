@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { title } = Astro.props;
-const user = getCurrentUser(Astro);
+const user = await getCurrentUser(Astro);
 ---
 
 <!doctype html>

@@ -10,7 +10,7 @@ export const GET: APIRoute = async ({ request }) => {
       headers: { "Content-Type": "application/json" },
     });
   }
-  const username = getSession(sessionId);
+  const username = await getSession(sessionId);
   if (!username) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
