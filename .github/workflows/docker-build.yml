@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true  # Siempre push (tanto en PRs como en main)
+          push: true
           tags: |
             ${{ github.event_name == 'pull_request' && format('ghcr.io/{0}/panal:pr-{1}-{2}', github.repository_owner, github.event.number, github.sha) || format('ghcr.io/{0}/panal:{1}', github.repository_owner, 'latest') }}
             ${{ github.event_name == 'pull_request' && '' || format('ghcr.io/{0}/panal:{1}', github.repository_owner, github.sha) }}
