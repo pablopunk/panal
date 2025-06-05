@@ -2,16 +2,16 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      packages: write  # Necesario para push desde PRs del mismo repo
 
     steps:
       - name: Checkout code
@@ -31,9 +31,13 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true  # Siempre push (tanto en PRs como en main)
           tags: |
-            ghcr.io/${{ github.repository_owner }}/panal:latest
-            ghcr.io/${{ github.repository_owner }}/panal:${{ github.sha }}
+            ${{ github.event_name == 'pull_request' && format('ghcr.io/{0}/panal:pr-{1}-{2}', github.repository_owner, github.event.number, github.sha) || format('ghcr.io/{0}/panal:{1}', github.repository_owner, 'latest') }}
+            ${{ github.event_name == 'pull_request' && '' || format('ghcr.io/{0}/panal:{1}', github.repository_owner, github.sha) }}
+          labels: |
+            type=${{ github.event_name }}
+            pr=${{ github.event_name == 'pull_request' && github.event.number || 'none' }}
+            branch=${{ github.ref_name }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ github.event_name == 'pull_request' && 'type=gha,mode=max' || 'type=gha,mode=max' }}
