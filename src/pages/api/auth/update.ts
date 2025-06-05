@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({ request }) => {
       },
     );
   }
-  const currentUsername = getSession(sessionId);
+  const currentUsername = await getSession(sessionId);
   if (!currentUsername) {
     return new Response(
       JSON.stringify({ success: false, message: "Unauthorized" }),

@@ -1,8 +1,9 @@
 import { getSession, getSessionIdFromCookie } from "./auth";
 
-export function getCurrentUser(Astro: Astro): string | null {
+export async function getCurrentUser(Astro: Astro): Promise<string | null> {
   const cookie = Astro.request.headers.get("cookie") || undefined;
   const sessionId = getSessionIdFromCookie(cookie);
   if (!sessionId) return null;
-  return getSession(sessionId) || null;
+  const username = await getSession(sessionId);
+  return username || null;
 }
