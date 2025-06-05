@@ -1,6 +1,9 @@
 import type { MiddlewareHandler } from "astro";
 import { isAuthenticated } from "./lib/auth";
 import { getUsers } from "./lib/db";
+import { startEventLogger } from "./lib/docker/events";
+
+startEventLogger();
 
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const { pathname } = new URL(context.request.url);

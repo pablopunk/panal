@@ -1,8 +1,12 @@
-import { execSync, spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
+
 import Docker from "dockerode";
+import YAML from "js-yaml";
+
 import { STACKS_DIR } from "../config";
+import { broadcastLog } from "../log-stream";
+import { logger } from "../logger";
 
 const docker = new Docker();
 
@@ -32,6 +36,33 @@ function dedupePorts(ports: Port[]): Port[] {
     seen.add(key);
     return true;
   });
+}
+
+function parseEnvFile(env?: string): string[] {
+  if (!env) return [];
+  return env
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#"));
+}
+
+function parsePorts(ports: unknown): Port[] {
+  if (!Array.isArray(ports)) return [];
+  const out: Port[] = [];
+  for (const p of ports) {
+    if (typeof p !== "string") continue;
+    const [pub, rest] = p.split(":");
+    const [target, proto] = rest.split("/");
+    const published = Number(pub);
+    const t = Number(target);
+    if (Number.isNaN(published) || Number.isNaN(t)) continue;
+    out.push({
+      published,
+      target: t,
+      protocol: proto === "udp" ? "udp" : "tcp",
+    });
+  }
+  return out;
 }
 
 export async function isSwarmActive(): Promise<boolean> {
@@ -193,31 +224,107 @@ export async function runStackDeployOrUpdate({
     await fs.writeFile(path.join(stackDir, ".env"), env || "");
     const logPath = path.join(stackDir, "deploy.log");
     const swarm = await isSwarmActive();
-    const logStream = await fs.open(logPath, "w");
-    let proc: ReturnType<typeof spawn>;
-    if (swarm) {
-      proc = spawn(
-        "docker",
-        ["stack", "deploy", "-c", "docker-compose.yml", stackName],
-        { cwd: stackDir },
-      );
-    } else {
-      proc = spawn("docker-compose", ["down"], { cwd: stackDir });
-      proc.on("close", () => {
-        spawn("docker-compose", ["up", "-d"], { cwd: stackDir });
-      });
+    const file = await fs.open(logPath, "w");
+    const envVars = parseEnvFile(env);
+    const config = YAML.load(compose) as Record<string, unknown> | undefined;
+    const services =
+      (config && (config as { services?: Record<string, unknown> }).services) ||
+      {};
+
+    const log = async (m: string) => {
+      await file.write(`${m}\n`);
+      broadcastLog(stackName, m);
+      logger.info({ stack: stackName, msg: m });
+    };
+
+    async function apply() {
+      for (const [svcName, svc] of Object.entries(
+        services as Record<string, unknown>,
+      )) {
+        const image = svc.image as string;
+        if (!image) continue;
+        const ports = parsePorts(svc.ports);
+        const envArr = [...envVars];
+        if (Array.isArray(svc.environment)) {
+          envArr.push(...svc.environment);
+        }
+        await log(`Deploying ${svcName}...`);
+        if (swarm) {
+          const name = `${stackName}_${svcName}`;
+          const spec: Docker.ServiceSpec = {
+            Name: name,
+            TaskTemplate: {
+              ContainerSpec: { Image: image, Env: envArr },
+            },
+          };
+          if (ports.length) {
+            spec.EndpointSpec = {
+              Ports: ports.map((p) => ({
+                Protocol: p.protocol,
+                PublishedPort: p.published,
+                TargetPort: p.target,
+              })),
+            };
+          }
+          try {
+            const existing = docker.getService(name);
+            await existing.inspect();
+            await existing.update({
+              version: (await existing.inspect()).Version.Index,
+              ...spec,
+            });
+          } catch {
+            await docker.createService(spec);
+          }
+        } else {
+          const name = `${stackName}_${svcName}`;
+          try {
+            const cont = docker.getContainer(name);
+            await cont.inspect();
+            await cont.stop().catch(() => undefined);
+            await cont.remove().catch(() => undefined);
+          } catch {}
+          const portBindings: Record<string, Array<{ HostPort: string }>> = {};
+          const exposed: Record<string, Record<string, never>> = {};
+          for (const p of ports) {
+            exposed[`${p.target}/${p.protocol}`] = {};
+            portBindings[`${p.target}/${p.protocol}`] = [
+              { HostPort: String(p.published) },
+            ];
+          }
+          const container = await docker.createContainer({
+            name,
+            Image: image,
+            Env: envArr,
+            Labels: { "com.docker.compose.project": stackName },
+            ExposedPorts: exposed,
+            HostConfig: { PortBindings: portBindings },
+          });
+          await container.start();
+        }
+        await log(`${svcName} deployed`);
+      }
     }
-    if (proc.stdout) {
-      proc.stdout.on("data", (data) => logStream.write(data));
+
+    let attempt = 0;
+    while (attempt < 3) {
+      try {
+        await apply();
+        await log("Deployment complete");
+        await file.close();
+        return { success: true };
+      } catch (err) {
+        attempt++;
+        await log(`Error: ${err}`);
+        if (attempt >= 3) {
+          await file.close();
+          return { success: false, message: String(err) };
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
     }
-    if (proc.stderr) {
-      proc.stderr.on("data", (data) => logStream.write(data));
-    }
-    proc.on("close", async (code) => {
-      await logStream.write(`\n[Process exited with code ${code}]\n`);
-      await logStream.close();
-    });
-    return { success: true };
+    await file.close();
+    return { success: false, message: "Unknown" };
   } catch (err) {
     return { success: false, message: String(err) };
   }
@@ -229,11 +336,27 @@ export async function runStackRemove({
   if (!id) return { success: false, message: "Missing stack id" };
   const stackDir = path.join(STACKS_LOCATION, id);
   try {
-    // Stop the stack (ignore errors)
-    await new Promise((resolve) => {
-      const proc = spawn("docker-compose", ["down"], { cwd: stackDir });
-      proc.on("close", () => resolve(undefined));
-    });
+    const swarm = await isSwarmActive();
+    if (swarm) {
+      const services = await docker.listServices();
+      for (const svc of services) {
+        if (svc.Spec?.Name?.startsWith(`${id}_`)) {
+          await docker.getService(svc.ID).remove();
+        }
+      }
+    } else {
+      const containers = await docker.listContainers({ all: true });
+      for (const c of containers) {
+        if (
+          c.Labels["com.docker.compose.project"] === id ||
+          c.Names?.some((n) => n.startsWith(`/${id}_`))
+        ) {
+          const cont = docker.getContainer(c.Id);
+          await cont.stop().catch(() => undefined);
+          await cont.remove({ force: true }).catch(() => undefined);
+        }
+      }
+    }
     // Remove the stack directory
     await fs.rm(stackDir, { recursive: true, force: true });
     return { success: true };
