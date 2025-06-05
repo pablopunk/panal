@@ -1,56 +1,28 @@
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import fs from "node:fs/promises";
+import Docker from "dockerode";
 import type { APIRoute } from "astro";
 import { logger } from "../../lib/logger";
 
-// Common Docker daemon log locations
-const LOG_PATHS = [
-  "/var/log/docker.log",
-  "/var/log/upstart/docker.log",
-  "/var/log/syslog", // sometimes logs are here
-];
+const docker = new Docker();
 
 async function getDockerLogs({ lines = 200 }: { lines?: number }) {
-  // Try journalctl first (systemd systems)
-  return new Promise<string>((resolve) => {
-    const journal = spawn("journalctl", [
-      "-u",
-      "docker.service",
-      "-n",
-      String(lines),
-      "--no-pager",
-    ]);
-
-    let output = "";
-    let errored = false;
-    journal.stdout.on("data", (data) => {
-      output += data.toString();
-    });
-    journal.stderr.on("data", () => {
-      errored = true;
-    });
-    journal.on("close", (code) => {
-      if (!errored && output.trim()) {
-        resolve(output);
-      } else {
-        // Fallback to log files
-        (async () => {
-          for (const logPath of LOG_PATHS) {
-            if (existsSync(logPath)) {
-              try {
-                const file = await fs.readFile(logPath, "utf-8");
-                const linesArr = file.trim().split("\n");
-                resolve(linesArr.slice(-lines).join("\n"));
-                return;
-              } catch {}
-            }
-          }
-          resolve("");
-        })();
-      }
-    });
-  });
+  const containers = await docker.listContainers({ all: true });
+  let output = "";
+  for (const c of containers) {
+    const name = c.Names?.[0] || c.Id;
+    try {
+      const container = docker.getContainer(c.Id);
+      const stream = await container.logs({
+        stdout: true,
+        stderr: true,
+        tail: lines,
+        timestamps: true,
+      });
+      output += `# ${name}\n` + stream.toString();
+    } catch (err) {
+      logger.error("Failed to get container logs", { id: c.Id, err });
+    }
+  }
+  return output;
 }
 
 export const GET: APIRoute = async ({ request }) => {

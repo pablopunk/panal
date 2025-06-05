@@ -12,35 +12,23 @@ export default function StackLogViewer({
   const [log, setLog] = useState("");
   const [live, setLive] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const eventRef = useRef<EventSource | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
 
   useEffect(() => {
     setLog("");
     setLive(true);
-    async function fetchLog() {
-      try {
-        const res = await fetch(`/api/stacks/${stackId}/log`);
-        if (res.ok) {
-          const data = await res.json();
-          if ("success" in data) {
-            setLog(data.log);
-            setLive(true);
-          } else {
-            setLog("Error fetching logs.");
-            setLive(false);
-          }
-        } else {
-          setLive(false);
-        }
-      } catch (err) {
-        setLive(false);
-      }
-    }
-    fetchLog();
-    intervalRef.current = setInterval(fetchLog, 1000);
+    const es = new EventSource(`/api/stacks/${stackId}/log?stream=1`);
+    eventRef.current = es;
+    es.onmessage = (ev) => {
+      setLog((prev) => prev + ev.data);
+      setLive(true);
+    };
+    es.onerror = () => {
+      setLive(false);
+    };
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      es.close();
     };
   }, [stackId]);
 

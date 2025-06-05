@@ -2,7 +2,9 @@ import { execSync, spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import Docker from "dockerode";
+import DockerCompose from "dockerode-compose";
 import { STACKS_DIR } from "../config";
+import { logger } from "../logger";
 
 const docker = new Docker();
 
@@ -194,29 +196,40 @@ export async function runStackDeployOrUpdate({
     const logPath = path.join(stackDir, "deploy.log");
     const swarm = await isSwarmActive();
     const logStream = await fs.open(logPath, "w");
-    let proc: ReturnType<typeof spawn>;
     if (swarm) {
-      proc = spawn(
+      logger.info("Deploying stack via docker stack", { stack: stackName });
+      const proc = spawn(
         "docker",
         ["stack", "deploy", "-c", "docker-compose.yml", stackName],
         { cwd: stackDir },
       );
-    } else {
-      proc = spawn("docker-compose", ["down"], { cwd: stackDir });
-      proc.on("close", () => {
-        spawn("docker-compose", ["up", "-d"], { cwd: stackDir });
-      });
-    }
-    if (proc.stdout) {
-      proc.stdout.on("data", (data) => logStream.write(data));
-    }
-    if (proc.stderr) {
-      proc.stderr.on("data", (data) => logStream.write(data));
-    }
-    proc.on("close", async (code) => {
-      await logStream.write(`\n[Process exited with code ${code}]\n`);
+      proc.stdout?.on("data", (d) => logStream.write(d));
+      proc.stderr?.on("data", (d) => logStream.write(d));
+      const exitCode: number = await new Promise((resolve) =>
+        proc.on("close", (code) => resolve(code ?? 0)),
+      );
+      await logStream.write(`\n[Process exited with code ${exitCode}]\n`);
       await logStream.close();
-    });
+      if (exitCode !== 0) {
+        return { success: false, message: `stack deploy exited ${exitCode}` };
+      }
+    } else {
+      logger.info("Deploying stack via Docker Engine API", { stack: stackName });
+      const composeClient = new DockerCompose(
+        docker,
+        path.join(stackDir, "docker-compose.yml"),
+        stackName,
+      );
+      try {
+        const result = await composeClient.up();
+        await logStream.write(JSON.stringify(result, null, 2));
+        await logStream.close();
+      } catch (err) {
+        await logStream.write(String(err));
+        await logStream.close();
+        return { success: false, message: String(err) };
+      }
+    }
     return { success: true };
   } catch (err) {
     return { success: false, message: String(err) };
@@ -229,12 +242,28 @@ export async function runStackRemove({
   if (!id) return { success: false, message: "Missing stack id" };
   const stackDir = path.join(STACKS_LOCATION, id);
   try {
-    // Stop the stack (ignore errors)
-    await new Promise((resolve) => {
-      const proc = spawn("docker-compose", ["down"], { cwd: stackDir });
-      proc.on("close", () => resolve(undefined));
-    });
-    // Remove the stack directory
+    const swarm = await isSwarmActive();
+    if (swarm) {
+      logger.info("Removing stack via docker stack", { stack: id });
+      const proc = spawn("docker", ["stack", "rm", id]);
+      const exitCode: number = await new Promise((resolve) =>
+        proc.on("close", (code) => resolve(code ?? 0)),
+      );
+      if (exitCode !== 0) {
+        return { success: false, message: `stack rm exited ${exitCode}` };
+      }
+    } else {
+      const composeClient = new DockerCompose(
+        docker,
+        path.join(stackDir, "docker-compose.yml"),
+        id,
+      );
+      try {
+        await composeClient.down();
+      } catch (err) {
+        logger.error("Compose down failed", err);
+      }
+    }
     await fs.rm(stackDir, { recursive: true, force: true });
     return { success: true };
   } catch (err) {

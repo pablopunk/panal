@@ -21,9 +21,47 @@ export const GET: APIRoute = async ({ params, request }) => {
   const logPath = path.join(STACKS_LOCATION, id, "deploy.log");
   const url = new URL(request.url);
   const sinceParam = url.searchParams.get("since");
+  const stream = url.searchParams.get("stream") === "1";
   let since = 0;
   if (sinceParam && !Number.isNaN(Number(sinceParam))) {
     since = Number(sinceParam);
+  }
+  if (stream) {
+    const headers = new Headers({
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
+    const body = new ReadableStream({
+      async start(controller) {
+        let offset = since;
+        const send = async () => {
+          try {
+            const stat = await fs.stat(logPath);
+            if (stat.size > offset) {
+              const fh = await fs.open(logPath, "r");
+              const len = stat.size - offset;
+              const buff = Buffer.alloc(len);
+              await fh.read(buff, 0, len, offset);
+              await fh.close();
+              controller.enqueue(`data: ${buff.toString()}\n\n`);
+              offset = stat.size;
+            }
+          } catch (err) {
+            controller.error(err);
+          }
+        };
+        await send();
+        const watcher = fs.watch(logPath, async () => {
+          await send();
+        });
+        (this as any).watcher = watcher;
+      },
+      cancel() {
+        (this as any).watcher?.close();
+      },
+    });
+    return new Response(body, { headers });
   }
   try {
     const stat = await fs.stat(logPath);
