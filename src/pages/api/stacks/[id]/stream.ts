@@ -1,8 +1,5 @@
 import type { APIRoute } from "astro";
-import {
-  addLogListener,
-  removeLogListener,
-} from "../../../../lib/log-stream";
+import { addLogListener, removeLogListener } from "../../../../lib/log-stream";
 
 export const GET: APIRoute = ({ params }) => {
   const { id } = params;
