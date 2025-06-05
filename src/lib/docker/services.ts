@@ -196,7 +196,11 @@ export async function runStackDeployOrUpdate({
     const logStream = await fs.open(logPath, "w");
     let proc: ReturnType<typeof spawn>;
     if (swarm) {
-      proc = spawn("docker", ["stack", "deploy", "-c", "docker-compose.yml", stackName], { cwd: stackDir });
+      proc = spawn(
+        "docker",
+        ["stack", "deploy", "-c", "docker-compose.yml", stackName],
+        { cwd: stackDir },
+      );
     } else {
       proc = spawn("docker-compose", ["down"], { cwd: stackDir });
       proc.on("close", () => {

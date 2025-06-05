@@ -198,7 +198,7 @@ export default function StackList() {
                         {stack.services !== 1 ? "s" : ""}
                       </span>
                     </div>
-                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: this div only stops row clicks */}
                     <div
                       className="flex items-center gap-2"
                       onClick={stopPropagation}
@@ -315,7 +315,7 @@ export default function StackList() {
                           {stack.services !== 1 ? "s" : ""}
                         </span>
                       </div>
-                      {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+                      {/* biome-ignore lint/a11y/useKeyWithClickEvents: click handler only stops row navigation */}
                       <div
                         className="flex items-center gap-2"
                         onClick={stopPropagation}

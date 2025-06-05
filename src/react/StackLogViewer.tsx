@@ -45,7 +45,7 @@ export default function StackLogViewer({
   }, [stackId]);
 
   // Auto-scroll to bottom when log changes and autoScroll is enabled
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: preRef is stable; re-run only when log or autoScroll change
   useEffect(() => {
     if (autoScroll && preRef.current) {
       preRef.current.scrollTop = preRef.current.scrollHeight;

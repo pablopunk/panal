@@ -2,7 +2,7 @@ import Docker from "dockerode";
 
 const docker = new Docker();
 
-// Mock data for Docker Swarm nodes
+// Utilities to retrieve Docker Swarm nodes
 
 export interface Node {
   id: string;
