@@ -9,7 +9,8 @@
     "dev": "DB_LOCATION=./data STACKS_DIR=./stacks astro dev",
     "lint:fix": "biome check --write src",
     "format": "biome format --write src",
-    "lint": "biome check src"
+    "lint": "biome check src",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/node": "^9.2.2",
@@ -87,6 +88,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.1"
   }
 }
